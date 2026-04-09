@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script>
+      // Redirect SPA routes to index.html, preserving the path as a query param
+      var path = window.location.pathname.replace('/zoey-bday', '') || '/';
+      window.location.replace(
+        window.location.origin + '/zoey-bday/?r=' + encodeURIComponent(path + window.location.search + window.location.hash)
+      );
+    </script>
+  </head>
+</html>

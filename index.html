@@ -5,6 +5,11 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Zoey's Birthday!</title>
+    <script>
+      // Restore path redirected from 404.html
+      var r = new URLSearchParams(window.location.search).get('r');
+      if (r) window.history.replaceState(null, '', '/zoey-bday' + r);
+    </script>
   </head>
   <body>
     <div id="root"></div>

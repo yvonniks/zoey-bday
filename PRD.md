@@ -64,15 +64,15 @@ export default {
 
 **Goal**: Guests can take a photo and see it appear in the gallery. Core loop works end-to-end.
 
-| Feature | Notes |
-|---|---|
-| Supabase project setup | Storage bucket (public read), `photos` table with RLS |
-| Config file | `src/config.js` with party name, colors, URL |
-| Camera page | Full-screen camera on load; falls back to file picker on desktop |
-| Photo upload | Upload to Supabase Storage → insert metadata row |
-| Polaroid gallery | Grid of polaroid cards (photo + caption area); Supabase Realtime so new uploads appear live |
-| QR code page | `/qr` route renders a printable QR code pointing to the site URL from config |
-| GitHub Pages deploy | Vite build → `gh-pages` branch via `npm run deploy` |
+| Feature | Status | Notes |
+|---|---|---|
+| Supabase project setup | ✅ Done | Storage bucket (public read), `photos` table with RLS |
+| Config file | ✅ Done | `src/config.js` with party name, colors, URL |
+| Camera page | ✅ Done | Full-screen camera on load; falls back to file picker on desktop |
+| Photo upload | ✅ Done | Upload to Supabase Storage → insert metadata row |
+| Polaroid gallery | ✅ Done | Grid of polaroid cards (photo + caption area); Supabase Realtime so new uploads appear live |
+| QR code page | ✅ Done | `/qr` route renders a printable QR code pointing to the site URL from config |
+| GitHub Pages deploy | ✅ Done | Vite build via GitHub Actions on push to `main` |
 
 **Supabase schema (Stage 1)**:
 ```sql

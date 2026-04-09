@@ -42,13 +42,23 @@ export default function Gallery() {
           </h1>
           <p className="text-xs text-gray-400">{config.subtitle}</p>
         </div>
-        <button
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/qr')}
+            className="px-3 py-2 rounded-full text-sm font-semibold border active:scale-95 transition-transform"
+            style={{ borderColor: config.accentColor, color: config.accentColor }}
+            aria-label="QR Code"
+          >
+            QR
+          </button>
+          <button
           onClick={() => navigate('/camera')}
           className="flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-semibold shadow active:scale-95 transition-transform"
           style={{ backgroundColor: config.accentColor }}
         >
           📷 Add Photo
         </button>
+        </div>
       </div>
 
       {/* Content */}
