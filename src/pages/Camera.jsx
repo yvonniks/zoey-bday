@@ -150,7 +150,13 @@ export default function Camera() {
   return (
     <div className="flex flex-col items-center min-h-screen" style={{ backgroundColor: config.backgroundColor }}>
       {/* Header */}
-      <div className="w-full flex items-center justify-between px-4 py-3">
+      <div
+        className="w-full flex items-center justify-between px-4"
+        style={{
+          paddingTop: 'max(0.75rem, env(safe-area-inset-top))',
+          paddingBottom: '0.75rem',
+        }}
+      >
         <button onClick={() => navigate('/')} className="text-2xl" aria-label="Back to gallery">
           ←
         </button>
@@ -160,7 +166,7 @@ export default function Camera() {
         <div className="w-8" />
       </div>
 
-      <div className="flex-1 flex flex-col items-center w-full max-w-lg px-4 pb-8 gap-4">
+      <div className="flex-1 flex flex-col items-center w-full max-w-lg px-4 gap-4" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
         {!capturedImage ? (
           <>
             {/* Pose prompt */}
@@ -276,8 +282,6 @@ export default function Camera() {
               style={{ '--tw-ring-color': config.accentColor }}
             />
 
-            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-
             <div className="flex gap-3 w-full">
               <button
                 onClick={handleRetake}
@@ -304,6 +308,24 @@ export default function Camera() {
         onSelect={handleAddSticker}
         onClose={() => setStickerPickerOpen(false)}
       />
+
+      {/* Upload error toast */}
+      {error && (
+        <div className="fixed bottom-6 left-4 right-4 z-50 flex items-center justify-between gap-3 bg-gray-900 text-white text-sm rounded-2xl px-4 py-3 shadow-xl"
+          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+        >
+          <span className="flex-1">⚠️ {error}</span>
+          <button
+            onClick={() => { setError(null); handleUpload() }}
+            className="font-semibold underline whitespace-nowrap"
+          >
+            Retry
+          </button>
+          <button onClick={() => setError(null)} aria-label="Dismiss" className="text-gray-400 text-lg leading-none">
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   )
 }

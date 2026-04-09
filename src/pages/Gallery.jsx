@@ -4,6 +4,15 @@ import { supabase } from '../supabaseClient'
 import config from '../config'
 import PolaroidCard from '../components/PolaroidCard'
 
+function randomRotation() {
+  // Between -4 and +4 degrees
+  return (Math.random() * 8 - 4).toFixed(2)
+}
+
+function withMeta(photo, isNew = false) {
+  return { ...photo, _isNew: isNew, _rotation: randomRotation() }
+}
+
 export default function Gallery() {
   const [photos, setPhotos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -16,16 +25,16 @@ export default function Gallery() {
         .from('photos')
         .select('*')
         .order('created_at', { ascending: false })
-      if (!error) setPhotos(data)
+      if (!error) setPhotos(data.map((p) => withMeta(p, false)))
       setLoading(false)
     }
     fetchPhotos()
 
-    // Realtime subscription — new inserts prepend to gallery
+    // Realtime subscription — new inserts prepend to gallery with drop-in animation
     const channel = supabase
       .channel('photos-gallery')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'photos' }, (payload) => {
-        setPhotos((prev) => [payload.new, ...prev])
+        setPhotos((prev) => [withMeta(payload.new, true), ...prev])
       })
       .subscribe()
 
@@ -35,7 +44,14 @@ export default function Gallery() {
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor: config.backgroundColor }}>
       {/* Header */}
-      <div className="sticky top-0 z-10 w-full px-4 py-4 flex items-center justify-between shadow-sm" style={{ backgroundColor: config.backgroundColor }}>
+      <div
+        className="sticky top-0 z-10 w-full px-4 flex items-center justify-between shadow-sm"
+        style={{
+          backgroundColor: config.backgroundColor,
+          paddingTop: 'max(1rem, env(safe-area-inset-top))',
+          paddingBottom: '1rem',
+        }}
+      >
         <div>
           <h1 className="text-xl font-bold leading-tight" style={{ color: config.accentColor }}>
             {config.partyName}
@@ -62,7 +78,7 @@ export default function Gallery() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-3 pb-8">
+      <div className="flex-1 px-3" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <span className="text-4xl animate-spin">🎉</span>
@@ -75,8 +91,12 @@ export default function Gallery() {
         ) : (
           <div className="columns-2 sm:columns-3 gap-3 space-y-3 pt-3">
             {photos.map((photo) => (
-              <div key={photo.id} className="break-inside-avoid">
-                <PolaroidCard photo={photo} />
+              <div
+                key={photo.id}
+                className={`break-inside-avoid${photo._isNew ? ' polaroid-drop-in' : ''}`}
+                style={{ '--card-rotation': `${photo._rotation}deg` }}
+              >
+                <PolaroidCard photo={photo} rotation={photo._rotation} />
               </div>
             ))}
           </div>

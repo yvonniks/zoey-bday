@@ -1,6 +1,6 @@
 import { supabase } from '../supabaseClient'
 
-export default function PolaroidCard({ photo }) {
+export default function PolaroidCard({ photo, rotation = 0 }) {
   const imageUrl = supabase.storage.from('photos').getPublicUrl(photo.storage_path).data.publicUrl
 
   const handleDownload = async () => {
@@ -20,7 +20,10 @@ export default function PolaroidCard({ photo }) {
   }
 
   return (
-    <div className="bg-white p-3 pb-4 shadow-md rounded-sm flex flex-col gap-2" style={{ fontFamily: "'Patrick Hand', cursive" }}>
+    <div
+      className="bg-white p-3 pb-4 shadow-md rounded-sm flex flex-col gap-2"
+      style={{ fontFamily: "'Patrick Hand', cursive", transform: `rotate(${rotation}deg)` }}
+    >
       <img
         src={imageUrl}
         alt={photo.caption || 'Party photo'}

@@ -103,20 +103,20 @@ create table photos (
 
 ---
 
-### Stage 3 — Polish & Deploy (Days 8–14) ✅ Party-Ready
+### Stage 3 — Polish & Deploy (Days 8–14) ✅ Done
 
 **Goal**: Delightful, bug-free experience ready for the party.
 
-| Feature | Notes |
-|---|---|
-| Polaroid animations | New photos "drop in" with a slight random rotation (CSS keyframes) |
-| Loading & empty states | Spinner on upload, friendly empty gallery message |
-| Error handling | Upload failure toast with retry |
-| Config-driven theming | CSS variables set from config (accent color, background) |
-| Mobile UX polish | Large touch targets, no horizontal scroll, safe area insets for notched phones |
-| QR code print page | Styled `/qr` page with party name, subtitle, and scannable code — ready to print or display on a TV |
-| README | Setup instructions for future parties (clone → edit config → deploy) |
-| Smoke test checklist | End-to-end test on iPhone Safari and Android Chrome |
+| Feature | Status | Notes |
+|---|---|---|
+| Polaroid animations | ✅ Done | New photos drop in with bounce keyframe + ±4° random permanent tilt; initial load photos get rotation only |
+| Loading & empty states | ✅ Done | Spinner on gallery load, friendly empty state message |
+| Error handling | ✅ Done | Upload failure shows fixed bottom toast with Retry and Dismiss buttons |
+| Config-driven theming | ✅ Done | `--accent` and `--bg-color` CSS vars set from `config.js` in App.jsx |
+| Mobile UX polish | ✅ Done | Safe area insets (`env(safe-area-inset-*)`) on all headers/footers; no horizontal scroll |
+| QR code print page | ✅ Done | Redesigned `/qr` with branded card, 300px QR, Print button; `.no-print` hides UI chrome on print |
+| README | ✅ Done | Full setup guide: clone → Supabase schema → config → env vars → deploy |
+| Smoke test checklist | ⬜ Pending | End-to-end test on iPhone Safari and Android Chrome |
 
 ---
 

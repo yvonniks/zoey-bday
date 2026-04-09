@@ -11,6 +11,9 @@ export default function App() {
       style={{
         backgroundColor: config.backgroundColor,
         '--accent': config.accentColor,
+        '--bg-color': config.backgroundColor,
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
       }}
     >
       <BrowserRouter basename="/zoey-bday">
