@@ -71,8 +71,8 @@ export default {
 | Camera page | ✅ Done | Full-screen camera on load; falls back to file picker on desktop |
 | Photo upload | ✅ Done | Upload to Supabase Storage → insert metadata row |
 | Polaroid gallery | ✅ Done | Grid of polaroid cards (photo + caption area); Supabase Realtime so new uploads appear live |
-| QR code page | ✅ Done | `/qr` route renders a printable QR code pointing to the site URL from config |
-| GitHub Pages deploy | ✅ Done | Vite build via GitHub Actions on push to `main` |
+| QR code page | ✅ Done | `/qr` route renders a printable QR code; QR button in gallery header |
+| GitHub Pages deploy | ✅ Done | Vite build via GitHub Actions on push to `main`; SPA routing handled via 404.html redirect |
 
 **Supabase schema (Stage 1)**:
 ```sql
