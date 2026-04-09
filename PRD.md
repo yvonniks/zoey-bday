@@ -86,7 +86,7 @@ create table photos (
 
 ---
 
-### Stage 2 — Photo Enrichment (Days 4–7) ✅ Core UX
+### Stage 2 — Photo Enrichment (Days 4–7) ✅ Done
 
 **Goal**: Guests can personalize their photo before posting.
 
