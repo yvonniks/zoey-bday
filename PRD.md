@@ -120,6 +120,42 @@ create table photos (
 
 ---
 
+### Stage 4 — UX Design Polish ✅ Done
+
+**Goal**: Delightful, accessible, fully personalized experience with modern visual design inspired by the Snappie prototype aesthetic.
+
+| Feature | Status | Notes |
+|---|---|---|
+| Typography | ✅ Done | **Fredoka** (display/headings — party energy) + **Nunito** (body — clean, accessible). Both via Google Fonts. |
+| Color system | ✅ Done | Expanded `config.theme`: `primary`, `secondary`, `accent`, `background`, `surface`, `text`, `gradientStart`, `gradientEnd` |
+| Gallery dark backdrop | ✅ Done | Deep `#12101f` background — polaroids float on darkness and pop visually |
+| Gallery hero header | ✅ Done | Full-bleed gradient hero (pink→purple) with Fredoka party name, decorative circles, live photo count pill |
+| Bottom nav | ✅ Done | Fixed dark bottom nav with floating elevated camera button (pink gradient, elevated 18px above bar) |
+| Polaroid cream cards | ✅ Done | Warm cream `#FFF5E6` polaroid background; Fredoka captions + auto date stamp |
+| Polaroid push-pin | ✅ Done | Peach/gold radial-gradient push-pin dot above each card |
+| Tape corners | ✅ Done | CSS `::before`/`::after` semi-transparent golden tape at top corners |
+| Polaroid hover lift | ✅ Done | Card lifts 8px, scales 1.04×, de-rotates, and deepens shadow on hover |
+| Scroll reveal | ✅ Done | Cards fade+slide in via IntersectionObserver (`useScrollReveal` hook) |
+| Camera dark atmospheric | ✅ Done | Dark `#0d0d14` background; ambient orbs pulsing in file-picker; viewfinder corner brackets; double-ring shutter button |
+| Camera transitions | ✅ Done | Background smoothly transitions from dark (viewfinder) to warm cream (preview) after capture |
+| Camera flash | ✅ Done | White overlay flash on capture |
+| Confetti on upload | ✅ Done | `canvas-confetti` burst on successful post using theme colors; gated on `prefers-reduced-motion` |
+| Sticker picker slide-up | ✅ Done | Bottom sheet slides up with spring animation; reads stickers from `config.stickers[]` |
+| Web Share API | ✅ Done | Share button on polaroid cards; native OS share sheet on iOS/Android; hidden on unsupported browsers |
+| Copy link | ✅ Done | One-tap copy of photo URL; "✓ Copied" label swap for 2s |
+| OG / social meta | ✅ Done | Open Graph + Twitter Card tags in `index.html`; comments guide customizers to update them |
+| Reduced motion | ✅ Done | `@media (prefers-reduced-motion: reduce)` disables all animations; scroll-reveal cards remain visible |
+| Accessibility | ✅ Done | All buttons ≥44px touch targets, `aria-label` on all icon buttons, `role="alert"` on error toast, global `:focus-visible` ring |
+| Personalization | ✅ Done | `src/config.js` is single source of truth — theme, stickers, OG copy, party details, prompts |
+
+**New files**:
+- `src/hooks/useScrollReveal.js` — IntersectionObserver hook for gallery scroll-reveal
+
+**New dependency**:
+- `canvas-confetti` (~7kb, no sub-deps)
+
+---
+
 ## Deferred (Post-Party / Future Stages)
 
 | Feature | Reason deferred |
@@ -143,7 +179,8 @@ create table photos (
 | `src/pages/Gallery.jsx` | Realtime polaroid gallery |
 | `src/pages/QRCode.jsx` | Printable QR code page |
 | `src/components/PolaroidCard.jsx` | Individual gallery card with download button |
-| `src/components/StickerPicker.jsx` | Bottom drawer sticker picker |
+| `src/components/StickerPicker.jsx` | Bottom drawer sticker picker (stickers sourced from `config.stickers[]`) |
+| `src/hooks/useScrollReveal.js` | IntersectionObserver hook for gallery scroll-reveal |
 | `src/utils/composeImage.js` | Canvas compositing (photo + stickers + caption → JPEG) |
 | `.env.local` | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (gitignored) |
 | `.env.example` | Template showing required env vars (committed) |
@@ -169,6 +206,8 @@ zoey-bday/
 │   ├── components/
 │   │   ├── PolaroidCard.jsx
 │   │   └── StickerPicker.jsx
+│   ├── hooks/
+│   │   └── useScrollReveal.js
 │   └── utils/
 │       └── composeImage.js
 ├── .env.local                 ← gitignored

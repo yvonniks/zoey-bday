@@ -1,19 +1,233 @@
 @import "tailwindcss";
 
-/* ── CSS vars (set by App.jsx from config) ───────────────────────── */
+/* ── CSS vars (set by App.jsx from config.theme) ──────────────────────────── */
 :root {
-  --accent: #FF6B9D;
-  --bg-color: #FFF5F9;
+  --color-primary:    #E91E8C;
+  --color-secondary:  #9B59B6;
+  --color-accent:     #FFB347;
+  --color-background: #FFF5F9;
+  --color-surface:    #FFF5E6;
+  --color-text:       #1a1a2e;
+  --gradient-start:   #FF6B9D;
+  --gradient-end:     #C44FE8;
 }
 
-/* ── Safe area insets ────────────────────────────────────────────── */
+/* ── Base ──────────────────────────────────────────────────────────────────── */
 body {
-  background-color: var(--bg-color);
+  background-color: var(--color-background);
+  font-family: 'Nunito', sans-serif;
   overflow-x: hidden;
-  /* Prevent any stray horizontal scroll */
+  color: var(--color-text);
 }
 
-/* ── Polaroid drop-in animation ─────────────────────────────────── */
+/* ── Gallery dark backdrop ────────────────────────────────────────────────── */
+.gallery-page {
+  background: #12101f;
+}
+
+/* ── Gallery hero header ──────────────────────────────────────────────────── */
+.gallery-hero {
+  background: linear-gradient(148deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  position: relative;
+  overflow: hidden;
+}
+.gallery-hero::before {
+  content: '';
+  position: absolute;
+  top: -70px; right: -50px;
+  width: 220px; height: 220px;
+  background: rgba(255,255,255,.08);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.gallery-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -48px; left: -30px;
+  width: 140px; height: 140px;
+  background: rgba(255,255,255,.05);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ── Gallery party name ───────────────────────────────────────────────────── */
+.gallery-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+.gallery-subtitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,.72);
+  margin-top: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Bottom nav ───────────────────────────────────────────────────────────── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 76px;
+  background: rgba(18,16,31,.97);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255,255,255,.07);
+  display: flex;
+  align-items: flex-start;
+  padding-top: 9px;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+.bottom-nav-icon { font-size: 22px; line-height: 1; }
+.bottom-nav-label {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: rgba(255,255,255,.35);
+}
+.bottom-nav-label.active { color: var(--color-accent); }
+.bottom-nav-cam-wrap {
+  flex: 0;
+  padding: 0 8px;
+  display: flex;
+  align-items: flex-start;
+}
+.bottom-nav-cam {
+  width: 58px; height: 58px;
+  background: linear-gradient(135deg, var(--color-primary), #FF9050);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 6px 24px rgba(233,30,140,.5);
+  margin-top: -18px;
+  cursor: pointer;
+  border: 3px solid #12101f;
+  transition: transform .14s;
+}
+.bottom-nav-cam:active { transform: scale(.92); }
+
+/* ── Polaroid wrapper + hover ─────────────────────────────────────────────── */
+.polaroid-wrapper {
+  transform: rotate(var(--rotation, 0deg));
+  transition: transform 0.22s ease, filter 0.22s ease;
+  position: relative;
+  padding-top: 0.85rem;
+}
+.polaroid-wrapper:hover {
+  transform: translateY(-8px) scale(1.04);
+  filter: drop-shadow(0 18px 32px rgba(0,0,0,.35));
+  z-index: 10;
+  position: relative;
+}
+
+/* ── Polaroid card ────────────────────────────────────────────────────────── */
+.polaroid-card {
+  background: #FFF5E6;
+  box-shadow: 0 8px 28px rgba(0,0,0,.22), 0 2px 6px rgba(0,0,0,.08);
+  border-radius: 2px;
+}
+
+/* Tape corners */
+.polaroid-card::before,
+.polaroid-card::after {
+  content: '';
+  position: absolute;
+  width: 44px;
+  height: 14px;
+  background: rgba(255, 230, 100, 0.6);
+  top: -6px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 2;
+}
+.polaroid-card::before {
+  left: 10%;
+  transform: rotate(-38deg);
+}
+.polaroid-card::after {
+  right: 10%;
+  transform: rotate(38deg);
+}
+
+/* ── Polaroid captions (Fredoka) ──────────────────────────────────────────── */
+.polaroid-caption {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  text-align: center;
+  line-height: 1.3;
+}
+.polaroid-date {
+  font-size: 8px;
+  font-weight: 700;
+  color: #aaa;
+  text-align: center;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ── Camera viewfinder atmospheric orbs ──────────────────────────────────── */
+.vf-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(55px);
+  animation: ofloat var(--d, 4s) ease-in-out infinite;
+  animation-delay: var(--dl, 0s);
+  pointer-events: none;
+}
+@keyframes ofloat {
+  0%,100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(var(--mx, 20px), var(--my, -20px)) scale(1.12); }
+}
+
+/* ── Camera viewfinder brackets ──────────────────────────────────────────── */
+.vf-bracket {
+  position: absolute;
+  width: 26px; height: 26px;
+  border-color: rgba(255,255,255,.3);
+  border-style: solid;
+  pointer-events: none;
+}
+.vf-bracket.tl { top:14px; left:14px;    border-width: 2px 0 0 2px; }
+.vf-bracket.tr { top:14px; right:14px;   border-width: 2px 2px 0 0; }
+.vf-bracket.bl { bottom:14px; left:14px; border-width: 0 0 2px 2px; }
+.vf-bracket.br { bottom:14px; right:14px;border-width: 0 2px 2px 0; }
+
+/* ── Camera capture flash ─────────────────────────────────────────────────── */
+@keyframes flash {
+  0%   { opacity: 0; }
+  30%  { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+.camera-flash {
+  animation: flash 0.4s ease-out forwards;
+}
+
+/* ── Sticker picker slide-up ──────────────────────────────────────────────── */
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.sticker-sheet-enter {
+  animation: slide-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ── Polaroid drop-in animation ───────────────────────────────────────────── */
 @keyframes drop-in {
   0% {
     opacity: 0;
@@ -28,17 +242,47 @@ body {
     transform: translateY(0) rotate(var(--card-rotation, 0deg)) scale(1);
   }
 }
-
 .polaroid-drop-in {
   animation: drop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-/* ── Print styles for QR page ───────────────────────────────────── */
+/* ── Scroll reveal ────────────────────────────────────────────────────────── */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Accessible focus ring ────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ── Print styles ─────────────────────────────────────────────────────────── */
 @media print {
   .no-print {
     display: none !important;
   }
   body {
     background: white !important;
+  }
+}
+
+/* ── Reduced motion ───────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .scroll-reveal {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

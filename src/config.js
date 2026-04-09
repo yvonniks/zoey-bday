@@ -1,14 +1,38 @@
 export default {
+  // ── Party details ────────────────────────────────────────────────────────────
   partyName: "Zoey's Birthday!",
   subtitle: "Snap a photo and leave a memory 🎉",
-  accentColor: "#FF6B9D",
-  backgroundColor: "#FFF5F9",
   siteUrl: "https://yvonniks.github.io/zoey-bday",
+
+  // ── Social sharing (update these when customizing for your event) ────────────
+  // Note: OG meta tags in index.html must also be updated manually (static site).
+  ogDescription: "Join Zoey's birthday party photo booth! Snap a photo, add stickers, and see it in the live gallery.",
+  ogImage: "https://yvonniks.github.io/zoey-bday/og-image.png", // replace with your own
+
+  // ── Theme ────────────────────────────────────────────────────────────────────
+  // All colors used throughout the app. Change these to rebrand for any event.
+  theme: {
+    primary:       "#E91E8C",   // hot pink — buttons, key CTAs
+    secondary:     "#9B59B6",   // purple — secondary accents
+    accent:        "#FFB347",   // peach/gold — push-pins, highlights, confetti
+    background:    "#FFF5F9",   // page background
+    surface:       "#FFFFFF",   // card / UI surface
+    text:          "#1a1a2e",   // default body text
+    gradientStart: "#FF6B9D",   // header gradient left
+    gradientEnd:   "#C44FE8",   // header gradient right
+    corkboard:     true,        // set false to use plain background instead
+  },
+
+  // ── Pose prompts ─────────────────────────────────────────────────────────────
   prompts: [
     "Make your best silly face!",
     "Strike a superhero pose!",
     "Show us your dance moves!",
     "Hug someone next to you!",
-    "Give us your biggest smile!"
-  ]
+    "Give us your biggest smile!",
+  ],
+
+  // ── Stickers ─────────────────────────────────────────────────────────────────
+  // Add, remove, or swap emojis here to match your event theme.
+  stickers: ["🎂", "🎉", "🎈", "🎁", "✨", "🦄", "🎊", "🌟", "💫", "🥳", "🍰", "🎀", "🎆", "🎇", "🎏", "💖"],
 }
