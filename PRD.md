@@ -156,6 +156,36 @@ create table photos (
 
 ---
 
+---
+
+### Stage 5 — Engagement & Delight ✅ Done
+
+**Goal**: Make the experience feel alive, celebratory, and full of surprise moments throughout the party.
+
+| Feature | Status | Notes |
+|---|---|---|
+| Entry confetti | ✅ Done | `canvas-confetti` burst fires on every Gallery mount (350ms delay, gated on reduced-motion) |
+| Hero circles breathing | ✅ Done | CSS `@keyframes hero-breathe` slow scale+opacity pulse on `::before`/`::after` pseudo-elements |
+| Remove hero QR button | ✅ Done | QR still accessible via bottom nav Share tab; hero is more compact |
+| Shrink hero padding | ✅ Done | `paddingTop` and `paddingBottom` reduced for less dead space |
+| Caveat marker font for captions | ✅ Done | Google Font "Caveat" replaces Fredoka for `.polaroid-caption`; handwritten marker feel |
+| Caption not burned into photo | ✅ Done | Removed canvas caption band from `composeImage.js`; caption lives only in DB + polaroid white area |
+| Tap photo → modal | ✅ Done | `PhotoModal.jsx` — full-screen blur backdrop, polaroid card, Save/Link/Share actions; iOS scroll lock; tap-outside dismiss |
+| Long-press star burst | ✅ Done | 500ms hold on any polaroid → `canvas-confetti` star burst from card center; `touchAction: manipulation` prevents iOS native menu |
+| Camera button larger | ✅ Done | `bottom-nav-cam` 58px → 66px, font-size 24px → 27px, float margin adjusted |
+| "Upload instead" text | ✅ Done | Replaced "Use file picker instead" in Camera.jsx |
+| Pose prompt typewriter | ✅ Done | `useEffect` types prompt char-by-char at 28ms/char; blinking cursor while typing; reduced-motion skips animation |
+| Pose prompt shuffle label | ✅ Done | 🔀 button now has "Shuffle" label below it; 🎯 target icon removed |
+| Pose prompt glow pulse | ✅ Done | `prompt-container` CSS class with `@keyframes prompt-glow` pink box-shadow pulse |
+| Glam filters | ✅ Done | 5 CSS filter presets (Off, Glow ✨, Vivid 🌈, Warm 🌅, B&W 🎞️); applied live to Webcam; baked into JPEG on capture via offscreen canvas |
+| Realtime new-photo toast | ✅ Done | Pink gradient toast slides in from top when Supabase realtime fires INSERT; auto-dismisses after 3s |
+| Sticker bounce on tap | ✅ Done | `sticker-tap` CSS animation on sticker button for 300ms when tapped in picker |
+
+**New files**:
+- `src/components/PhotoModal.jsx` — tap-to-open photo modal with actions
+
+---
+
 ## Deferred (Post-Party / Future Stages)
 
 | Feature | Reason deferred |

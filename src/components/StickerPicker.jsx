@@ -1,13 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import config from '../config'
 
 export default function StickerPicker({ open, onSelect, onClose }) {
   const [mounted, setMounted] = useState(false)
+  const [tappedEmoji, setTappedEmoji] = useState(null)
+  const tapTimerRef = useRef(null)
 
   useEffect(() => {
     // Delay one tick so the initial render doesn't flash the sheet open
     if (open) setMounted(true)
   }, [open])
+
+  const handleStickerTap = (emoji) => {
+    // Trigger bounce animation
+    setTappedEmoji(emoji)
+    clearTimeout(tapTimerRef.current)
+    tapTimerRef.current = setTimeout(() => setTappedEmoji(null), 300)
+    onSelect(emoji)
+    onClose()
+  }
 
   if (!open) return null
 
@@ -27,8 +38,8 @@ export default function StickerPicker({ open, onSelect, onClose }) {
           {config.stickers.map((emoji) => (
             <button
               key={emoji}
-              onClick={() => { onSelect(emoji); onClose() }}
-              className="text-3xl p-1 rounded-xl active:scale-90 transition-transform hover:bg-gray-100 min-h-[44px] flex items-center justify-center"
+              onClick={() => handleStickerTap(emoji)}
+              className={`text-3xl p-1 rounded-xl hover:bg-gray-100 min-h-[44px] flex items-center justify-center${tappedEmoji === emoji ? ' sticker-tap' : ''}`}
               aria-label={`Add ${emoji} sticker`}
             >
               {emoji}

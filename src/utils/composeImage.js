@@ -26,22 +26,6 @@ export function composeImage(imageSrc, stickers, caption) {
         ctx.fillText(emoji, (xPct / 100) * img.width, (yPct / 100) * img.height)
       }
 
-      // Draw caption band at bottom
-      if (caption && caption.trim()) {
-        const fontSize = Math.round(img.width * 0.045)
-        const padV = Math.round(img.width * 0.04)
-        const bandH = fontSize + padV * 2
-
-        ctx.fillStyle = 'rgba(0,0,0,0.45)'
-        ctx.fillRect(0, img.height - bandH, img.width, bandH)
-
-        ctx.fillStyle = '#ffffff'
-        ctx.font = `${fontSize}px sans-serif`
-        ctx.textBaseline = 'middle'
-        ctx.textAlign = 'center'
-        ctx.fillText(caption.trim(), img.width / 2, img.height - bandH / 2, img.width - padV * 2)
-      }
-
       canvas.toBlob(
         (blob) => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
         'image/jpeg',

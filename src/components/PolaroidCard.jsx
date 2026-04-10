@@ -1,11 +1,15 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import confetti from 'canvas-confetti'
 import { supabase } from '../supabaseClient'
 import config from '../config'
+import PhotoModal from './PhotoModal'
 
 export default function PolaroidCard({ photo, rotation = 0 }) {
-  const [copied, setCopied] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
   const imageUrl = supabase.storage.from('photos').getPublicUrl(photo.storage_path).data.publicUrl
-  const shareUrl = imageUrl
+
+  const longPressTimerRef = useRef(null)
+  const suppressNextClickRef = useRef(false)
 
   const dateStr = photo.created_at
     ? new Date(photo.created_at).toLocaleDateString('en-US', {
@@ -13,50 +17,51 @@ export default function PolaroidCard({ photo, rotation = 0 }) {
       }).toUpperCase()
     : ''
 
-  // ── Download ──────────────────────────────────────────────────────────────
-  const handleDownload = async () => {
-    try {
-      const response = await fetch(imageUrl)
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `party-photo-${photo.id}.jpg`
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch {
-      window.open(imageUrl, '_blank')
-    }
-  }
-
-  // ── Share (Web Share API) ─────────────────────────────────────────────────
-  const handleShare = async () => {
-    try {
-      await navigator.share({
-        title: config.partyName,
-        text: photo.caption || config.subtitle,
-        url: shareUrl,
+  // ── Long-press handlers ───────────────────────────────────────────────────
+  const handlePressStart = (e) => {
+    longPressTimerRef.current = setTimeout(() => {
+      suppressNextClickRef.current = true
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+      const rect = e.currentTarget.getBoundingClientRect()
+      const x = (rect.left + rect.width / 2) / window.innerWidth
+      const y = (rect.top + rect.height / 2) / window.innerHeight
+      confetti({
+        particleCount: 40,
+        spread: 60,
+        origin: { x, y },
+        colors: [config.theme.primary, config.theme.secondary, config.theme.accent, '#ff6fd8', '#fff'],
+        shapes: ['star'],
+        scalar: 1.2,
+        startVelocity: 22,
+        gravity: 0.8,
+        ticks: 180,
       })
-    } catch {
-      // User cancelled — silently ignore
-    }
+    }, 500)
   }
 
-  // ── Copy link ─────────────────────────────────────────────────────────────
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // Clipboard unavailable — silently ignore
+  const handlePressEnd = () => {
+    clearTimeout(longPressTimerRef.current)
+  }
+
+  const handleClick = () => {
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false
+      return
     }
+    setModalOpen(true)
   }
 
   return (
     <div
       className="polaroid-wrapper"
-      style={{ '--rotation': `${rotation}deg` }}
+      style={{ '--rotation': `${rotation}deg`, cursor: 'pointer', touchAction: 'manipulation' }}
+      onClick={handleClick}
+      onMouseDown={handlePressStart}
+      onMouseUp={handlePressEnd}
+      onMouseLeave={handlePressEnd}
+      onTouchStart={handlePressStart}
+      onTouchEnd={handlePressEnd}
+      onTouchCancel={handlePressEnd}
     >
       {/* Push-pin */}
       <div
@@ -82,8 +87,8 @@ export default function PolaroidCard({ photo, rotation = 0 }) {
           loading="lazy"
         />
 
-        {/* Caption & date area — fixed height "label" below photo */}
-        <div className="flex flex-col items-center justify-center" style={{ minHeight: '52px', padding: '6px 8px 4px' }}>
+        {/* Caption & date area */}
+        <div className="flex flex-col items-center justify-center" style={{ minHeight: '52px', padding: '6px 8px 10px' }}>
           {photo.caption && (
             <p className="polaroid-caption">{photo.caption}</p>
           )}
@@ -91,50 +96,15 @@ export default function PolaroidCard({ photo, rotation = 0 }) {
             <p className="polaroid-date" style={{ marginTop: photo.caption ? 2 : 0 }}>{dateStr}</p>
           )}
         </div>
-
-        {/* Action row */}
-        <div
-          className="flex items-center justify-center gap-0"
-          style={{ borderTop: '1px solid rgba(0,0,0,.06)', padding: '4px 0 8px' }}
-        >
-          <button
-            onClick={handleDownload}
-            className="flex-1 flex items-center justify-center gap-1 text-gray-400 hover:text-gray-600 transition-colors"
-            style={{ minHeight: 36, fontSize: 11, fontWeight: 700 }}
-            aria-label="Download photo"
-          >
-            ⬇ Save
-          </button>
-
-          <div style={{ width: 1, height: 16, background: 'rgba(0,0,0,.08)' }} />
-
-          <button
-            onClick={handleCopy}
-            className="flex-1 flex items-center justify-center transition-colors"
-            style={{
-              minHeight: 36, fontSize: 11, fontWeight: 700,
-              color: copied ? config.theme.primary : '#9ca3af',
-            }}
-            aria-label="Copy photo link"
-          >
-            {copied ? '✓ Copied' : '🔗 Link'}
-          </button>
-
-          {typeof navigator !== 'undefined' && navigator.share && (
-            <>
-              <div style={{ width: 1, height: 16, background: 'rgba(0,0,0,.08)' }} />
-              <button
-                onClick={handleShare}
-                className="flex-1 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
-                style={{ minHeight: 36, fontSize: 11, fontWeight: 700 }}
-                aria-label="Share photo"
-              >
-                ↗ Share
-              </button>
-            </>
-          )}
-        </div>
       </div>
+
+      {modalOpen && (
+        <PhotoModal
+          photo={photo}
+          imageUrl={imageUrl}
+          onClose={() => setModalOpen(false)}
+        />
+      )}
     </div>
   )
 }

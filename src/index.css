@@ -39,6 +39,7 @@ body {
   background: rgba(255,255,255,.08);
   border-radius: 50%;
   pointer-events: none;
+  animation: hero-breathe 7s ease-in-out infinite;
 }
 .gallery-hero::after {
   content: '';
@@ -48,6 +49,16 @@ body {
   background: rgba(255,255,255,.05);
   border-radius: 50%;
   pointer-events: none;
+  animation: hero-breathe-alt 5.5s ease-in-out infinite;
+  animation-delay: -2.5s;
+}
+@keyframes hero-breathe {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%       { transform: scale(1.18); opacity: 0.6; }
+}
+@keyframes hero-breathe-alt {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%       { transform: scale(1.22); opacity: 0.55; }
 }
 
 /* ── Gallery party name ───────────────────────────────────────────────────── */
@@ -107,13 +118,13 @@ body {
   align-items: flex-start;
 }
 .bottom-nav-cam {
-  width: 58px; height: 58px;
+  width: 66px; height: 66px;
   background: linear-gradient(135deg, var(--color-primary), #FF9050);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 24px;
+  font-size: 27px;
   box-shadow: 0 6px 24px rgba(233,30,140,.5);
-  margin-top: -18px;
+  margin-top: -22px;
   cursor: pointer;
   border: 3px solid #12101f;
   transition: transform .14s;
@@ -165,9 +176,9 @@ body {
 
 /* ── Polaroid captions (Fredoka) ──────────────────────────────────────────── */
 .polaroid-caption {
-  font-family: 'Fredoka', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
+  font-family: 'Caveat', cursive;
+  font-size: 15px;
+  font-weight: 700;
   color: #555;
   text-align: center;
   line-height: 1.3;
@@ -271,6 +282,84 @@ body {
   body {
     background: white !important;
   }
+}
+
+/* ── Photo modal ──────────────────────────────────────────────────────────── */
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.modal-card-enter {
+  animation: modal-in 0.22s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+
+/* ── Pose prompt glow ─────────────────────────────────────────────────────── */
+@keyframes prompt-glow {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50%       { box-shadow: 0 0 18px 4px rgba(233,30,140,.18); }
+}
+.prompt-container {
+  animation: prompt-glow 3s ease-in-out infinite;
+}
+
+/* ── Sticker bounce on tap ────────────────────────────────────────────────── */
+@keyframes sticker-tap {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.4); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+.sticker-tap {
+  animation: sticker-tap 0.28s cubic-bezier(0.34, 1.6, 0.64, 1) forwards;
+}
+
+/* ── Realtime new-photo toast ─────────────────────────────────────────────── */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toast-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-16px) scale(0.95); }
+}
+.toast-enter {
+  animation: toast-in 0.3s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+.toast-exit {
+  animation: toast-out 0.25s ease-in forwards;
+}
+
+/* ── Glam filter bar ──────────────────────────────────────────────────────── */
+.glam-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+.glam-filter-btn {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: transform .12s, border-color .12s;
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.glam-filter-btn:active { transform: scale(.93); }
+.glam-filter-btn.active {
+  border-color: var(--color-primary);
+  background: rgba(233,30,140,.18);
+  color: #fff;
 }
 
 /* ── Reduced motion ───────────────────────────────────────────────────────── */

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import confetti from 'canvas-confetti'
 import { supabase } from '../supabaseClient'
 import config from '../config'
 import PolaroidCard from '../components/PolaroidCard'
@@ -30,9 +31,37 @@ function RevealCard({ photo }) {
 export default function Gallery() {
   const [photos, setPhotos] = useState([])
   const [loading, setLoading] = useState(true)
+  const [toast, setToast] = useState(null) // { message, exiting }
+  const confettiFiredRef = useRef(false)
+  const toastTimerRef = useRef(null)
   const navigate = useNavigate()
 
+  const showToast = (message) => {
+    clearTimeout(toastTimerRef.current)
+    setToast({ message, exiting: false })
+    toastTimerRef.current = setTimeout(() => {
+      setToast((t) => t ? { ...t, exiting: true } : null)
+      toastTimerRef.current = setTimeout(() => setToast(null), 300)
+    }, 3000)
+  }
+
   useEffect(() => {
+    // Entry confetti on every gallery visit
+    if (!confettiFiredRef.current && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      confettiFiredRef.current = true
+      setTimeout(() => {
+        confetti({
+          particleCount: 80,
+          spread: 100,
+          origin: { y: 0.3 },
+          colors: [config.theme.primary, config.theme.secondary, config.theme.accent, '#ffffff'],
+          startVelocity: 28,
+          gravity: 0.9,
+          ticks: 200,
+        })
+      }, 350)
+    }
+
     const fetchPhotos = async () => {
       const { data, error } = await supabase
         .from('photos')
@@ -47,10 +76,14 @@ export default function Gallery() {
       .channel('photos-gallery')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'photos' }, (payload) => {
         setPhotos((prev) => [withMeta(payload.new, true), ...prev])
+        showToast('📸 A new memory just landed!')
       })
       .subscribe()
 
-    return () => supabase.removeChannel(channel)
+    return () => {
+      supabase.removeChannel(channel)
+      clearTimeout(toastTimerRef.current)
+    }
   }, [])
 
   return (
@@ -60,23 +93,12 @@ export default function Gallery() {
       <div
         className="gallery-hero flex-shrink-0"
         style={{
-          paddingTop: 'max(3.5rem, env(safe-area-inset-top))',
-          paddingBottom: '1.75rem',
+          paddingTop: 'max(2.5rem, env(safe-area-inset-top))',
+          paddingBottom: '1.1rem',
           paddingLeft: '1.5rem',
           paddingRight: '1.5rem',
         }}
       >
-        {/* QR button — top right */}
-        <div className="flex justify-end mb-3 relative z-10">
-          <button
-            onClick={() => navigate('/qr')}
-            className="px-4 py-1.5 rounded-full text-sm font-bold border-2 border-white/40 text-white/80 hover:border-white hover:text-white transition-colors active:scale-95"
-            aria-label="View QR Code"
-          >
-            QR
-          </button>
-        </div>
-
         {/* Party name */}
         <h1 className="gallery-title">{config.partyName}</h1>
         <p className="gallery-subtitle">{config.subtitle}</p>
@@ -125,6 +147,24 @@ export default function Gallery() {
           </div>
         )}
       </div>
+
+      {/* ── New photo toast ──────────────────────────────────────────────────── */}
+      {toast && (
+        <div
+          className={`fixed top-4 left-1/2 z-50 px-5 py-2.5 rounded-2xl text-white font-bold shadow-xl pointer-events-none ${toast.exiting ? 'toast-exit' : 'toast-enter'}`}
+          style={{
+            transform: 'translateX(-50%)',
+            background: `linear-gradient(135deg, ${config.theme.primary}, ${config.theme.secondary})`,
+            fontFamily: "'Fredoka', sans-serif",
+            fontSize: 15,
+            whiteSpace: 'nowrap',
+            marginTop: 'env(safe-area-inset-top)',
+          }}
+          aria-live="polite"
+        >
+          {toast.message}
+        </div>
+      )}
 
       {/* ── Bottom nav ───────────────────────────────────────────────────────── */}
       <div className="bottom-nav">

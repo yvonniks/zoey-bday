@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import Webcam from 'react-webcam'
 import { useNavigate } from 'react-router-dom'
 import confetti from 'canvas-confetti'
@@ -12,6 +12,14 @@ const VIDEO_CONSTRAINTS = {
   width: { ideal: 1280 },
   height: { ideal: 960 },
 }
+
+const GLAM_FILTERS = [
+  { id: 'none',  label: 'Off',   icon: '○',  filter: 'none' },
+  { id: 'glow',  label: 'Glow',  icon: '✨', filter: 'brightness(1.15) contrast(0.88) saturate(1.05)' },
+  { id: 'vivid', label: 'Vivid', icon: '🌈', filter: 'saturate(1.6) contrast(1.15)' },
+  { id: 'warm',  label: 'Warm',  icon: '🌅', filter: 'sepia(0.3) saturate(1.2) brightness(1.05)' },
+  { id: 'bw',    label: 'B&W',   icon: '🎞️', filter: 'grayscale(1) contrast(1.1)' },
+]
 
 function randomPrompt() {
   const { prompts } = config
@@ -37,19 +45,49 @@ export default function Camera() {
   const [error, setError] = useState(null)
   const [useFilePicker, setUseFilePicker] = useState(false)
   const [prompt, setPrompt] = useState(randomPrompt)
+  const [displayedPrompt, setDisplayedPrompt] = useState('')
   const [flashing, setFlashing] = useState(false)
+  const [glam, setGlam] = useState('none')
+
+  // Typewriter effect for prompt
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      setDisplayedPrompt(prompt)
+      return
+    }
+    setDisplayedPrompt('')
+    let i = 0
+    const interval = setInterval(() => {
+      setDisplayedPrompt(prompt.slice(0, i + 1))
+      i++
+      if (i >= prompt.length) clearInterval(interval)
+    }, 28)
+    return () => clearInterval(interval)
+  }, [prompt])
 
   const isDark = !capturedImage  // dark theme for viewfinder, light for preview
 
   // ── Capture ────────────────────────────────────────────────────────────────
 
   const handleCapture = useCallback(() => {
-    const imageSrc = webcamRef.current?.getScreenshot()
-    if (imageSrc) {
-      if (!prefersReducedMotion()) setFlashing(true)
-      setCapturedImage(imageSrc)
+    const video = webcamRef.current?.video
+    if (!video || video.readyState !== 4) return
+    if (!prefersReducedMotion()) setFlashing(true)
+    const activeFilter = GLAM_FILTERS.find((f) => f.id === glam)?.filter || 'none'
+    if (activeFilter === 'none') {
+      const imageSrc = webcamRef.current.getScreenshot()
+      if (imageSrc) setCapturedImage(imageSrc)
+    } else {
+      // Bake CSS filter into the captured frame via offscreen canvas
+      const canvas = document.createElement('canvas')
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      const ctx = canvas.getContext('2d')
+      ctx.filter = activeFilter
+      ctx.drawImage(video, 0, 0)
+      setCapturedImage(canvas.toDataURL('image/jpeg', 0.92))
     }
-  }, [])
+  }, [glam])
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
@@ -202,27 +240,36 @@ export default function Camera() {
           <>
             {/* Pose prompt */}
             <div
-              className="w-full rounded-2xl px-4 py-3 flex items-center gap-3"
+              className="prompt-container w-full rounded-2xl px-4 py-3 flex items-center gap-2"
               style={{
                 background: isDark ? 'rgba(255,255,255,.08)' : '#fff',
                 border: isDark ? '1px solid rgba(255,255,255,.1)' : '1px solid rgba(0,0,0,.06)',
                 backdropFilter: isDark ? 'blur(8px)' : undefined,
               }}
             >
-              <span className="text-xl">🎯</span>
               <p
                 className="flex-1 text-center text-sm"
-                style={{ fontWeight: 700, color: isDark ? 'rgba(255,255,255,.8)' : '#444' }}
+                style={{ fontWeight: 700, color: isDark ? 'rgba(255,255,255,.8)' : '#444', minHeight: '1.25em' }}
               >
-                {prompt}
+                {displayedPrompt}
+                {displayedPrompt.length < prompt.length && (
+                  <span style={{ opacity: 0.6 }}>|</span>
+                )}
               </p>
               <button
                 onClick={() => setPrompt(randomPrompt())}
-                className="flex items-center justify-center"
-                style={{ width: 44, height: 44, fontSize: 18 }}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  minWidth: 48, minHeight: 44, flexShrink: 0,
+                }}
                 aria-label="New prompt"
               >
-                🔀
+                <span style={{ fontSize: 18 }}>🔀</span>
+                <span style={{
+                  fontSize: 9, fontWeight: 800,
+                  color: isDark ? 'rgba(255,255,255,.45)' : '#999',
+                  textTransform: 'uppercase', letterSpacing: '0.5px',
+                }}>Shuffle</span>
               </button>
             </div>
 
@@ -235,6 +282,7 @@ export default function Camera() {
                   screenshotFormat="image/jpeg"
                   videoConstraints={VIDEO_CONSTRAINTS}
                   className="w-full"
+                  style={{ filter: GLAM_FILTERS.find((f) => f.id === glam)?.filter || 'none' }}
                   onUserMediaError={() => setUseFilePicker(true)}
                 />
                 {/* Corner brackets */}
@@ -278,6 +326,24 @@ export default function Camera() {
               </div>
             )}
 
+            {/* Glam filter bar */}
+            {!useFilePicker && (
+              <div className="glam-filter-bar">
+                {GLAM_FILTERS.map((f) => (
+                  <button
+                    key={f.id}
+                    className={`glam-filter-btn${glam === f.id ? ' active' : ''}`}
+                    onClick={() => setGlam(f.id)}
+                    aria-label={`${f.label} filter`}
+                    aria-pressed={glam === f.id}
+                  >
+                    <span style={{ fontSize: 16 }}>{f.icon}</span>
+                    <span>{f.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Shutter button */}
             <div className="flex flex-col items-center gap-2">
               <button
@@ -307,7 +373,7 @@ export default function Camera() {
                   className="text-sm underline"
                   style={{ color: 'rgba(255,255,255,.35)', fontWeight: 600 }}
                 >
-                  Use file picker instead
+                  Upload instead
                 </button>
               )}
             </div>
@@ -324,7 +390,12 @@ export default function Camera() {
               onTouchEnd={handleContainerPointerUp}
               onMouseLeave={handleContainerPointerUp}
             >
-              <img src={capturedImage} alt="Preview" className="w-full block" draggable={false} />
+              <img
+                src={capturedImage}
+                alt="Preview"
+                className="w-full block"
+                draggable={false}
+              />
               {stickers.map((sticker) => (
                 <div
                   key={sticker.id}
