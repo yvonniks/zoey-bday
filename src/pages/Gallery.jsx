@@ -4,6 +4,7 @@ import confetti from 'canvas-confetti'
 import { supabase } from '../supabaseClient'
 import config from '../config'
 import PolaroidCard from '../components/PolaroidCard'
+import ConfettiBackground from '../components/ConfettiBackground'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 function randomRotation() {
@@ -87,11 +88,14 @@ export default function Gallery() {
   }, [])
 
   return (
-    <div className="gallery-page flex flex-col min-h-screen">
+    <div className="gallery-page flex flex-col min-h-screen" style={{ position: 'relative' }}>
+      {/* Animated confetti background — sits behind all content */}
+      <ConfettiBackground />
 
       {/* ── Hero header ──────────────────────────────────────────────────────── */}
       <div
         className="gallery-hero flex-shrink-0"
+        style={{ position: 'relative', zIndex: 1 }}
         style={{
           paddingTop: 'max(2.5rem, env(safe-area-inset-top))',
           paddingBottom: '1.1rem',
@@ -118,6 +122,7 @@ export default function Gallery() {
       {/* ── Gallery grid ─────────────────────────────────────────────────────── */}
       <div
         className="flex-1 px-3 pt-5"
+        style={{ position: 'relative', zIndex: 1 }}
         style={{ paddingBottom: 'calc(76px + env(safe-area-inset-bottom) + 1.5rem)' }}
       >
         {loading ? (

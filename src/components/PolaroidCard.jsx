@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import confetti from 'canvas-confetti'
 import { supabase } from '../supabaseClient'
 import config from '../config'
@@ -19,10 +20,13 @@ export default function PolaroidCard({ photo, rotation = 0 }) {
 
   // ── Long-press handlers ───────────────────────────────────────────────────
   const handlePressStart = (e) => {
+    // Capture element synchronously — e.currentTarget becomes null after this
+    // handler returns (React's synthetic event cleanup), so we must save it now.
+    const element = e.currentTarget
     longPressTimerRef.current = setTimeout(() => {
       suppressNextClickRef.current = true
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-      const rect = e.currentTarget.getBoundingClientRect()
+      const rect = element.getBoundingClientRect()
       const x = (rect.left + rect.width / 2) / window.innerWidth
       const y = (rect.top + rect.height / 2) / window.innerHeight
       confetti({
@@ -52,59 +56,65 @@ export default function PolaroidCard({ photo, rotation = 0 }) {
   }
 
   return (
-    <div
-      className="polaroid-wrapper"
-      style={{ '--rotation': `${rotation}deg`, cursor: 'pointer', touchAction: 'manipulation' }}
-      onClick={handleClick}
-      onMouseDown={handlePressStart}
-      onMouseUp={handlePressEnd}
-      onMouseLeave={handlePressEnd}
-      onTouchStart={handlePressStart}
-      onTouchEnd={handlePressEnd}
-      onTouchCancel={handlePressEnd}
-    >
-      {/* Push-pin */}
+    <>
       <div
-        className="absolute left-1/2 -translate-x-1/2 z-10"
-        style={{
-          top: 0,
-          width: '13px', height: '13px',
-          borderRadius: '50%',
-          background: `radial-gradient(circle at 35% 35%, #ffe066, ${config.theme.accent})`,
-          boxShadow: `0 3px 8px rgba(0,0,0,.4), inset 0 1px 2px rgba(255,255,255,.5)`,
-        }}
-        aria-hidden="true"
-      />
-
-      {/* Polaroid card */}
-      <div className="polaroid-card relative flex flex-col overflow-visible" style={{ padding: '10px 10px 0' }}>
-        {/* Photo */}
-        <img
-          src={imageUrl}
-          alt={photo.caption || 'Party photo'}
-          className="w-full aspect-square object-cover"
-          style={{ borderRadius: '1px' }}
-          loading="lazy"
+        className="polaroid-wrapper"
+        style={{ '--rotation': `${rotation}deg`, cursor: 'pointer', touchAction: 'manipulation' }}
+        onClick={handleClick}
+        onMouseDown={handlePressStart}
+        onMouseUp={handlePressEnd}
+        onMouseLeave={handlePressEnd}
+        onTouchStart={handlePressStart}
+        onTouchEnd={handlePressEnd}
+        onTouchCancel={handlePressEnd}
+        // Prevent iOS long-press context menu from interfering with starburst
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        {/* Push-pin */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 z-10"
+          style={{
+            top: 0,
+            width: '13px', height: '13px',
+            borderRadius: '50%',
+            background: `radial-gradient(circle at 35% 35%, #ffe066, ${config.theme.accent})`,
+            boxShadow: `0 3px 8px rgba(0,0,0,.4), inset 0 1px 2px rgba(255,255,255,.5)`,
+          }}
+          aria-hidden="true"
         />
 
-        {/* Caption & date area */}
-        <div className="flex flex-col items-center justify-center" style={{ minHeight: '52px', padding: '6px 8px 10px' }}>
-          {photo.caption && (
-            <p className="polaroid-caption">{photo.caption}</p>
-          )}
-          {dateStr && (
-            <p className="polaroid-date" style={{ marginTop: photo.caption ? 2 : 0 }}>{dateStr}</p>
-          )}
+        {/* Polaroid card */}
+        <div className="polaroid-card relative flex flex-col overflow-visible" style={{ padding: '10px 10px 0' }}>
+          {/* Photo */}
+          <img
+            src={imageUrl}
+            alt={photo.caption || 'Party photo'}
+            className="w-full aspect-square object-cover"
+            style={{ borderRadius: '1px' }}
+            loading="lazy"
+          />
+
+          {/* Caption & date area */}
+          <div className="flex flex-col items-center justify-center" style={{ minHeight: '52px', padding: '6px 8px 10px' }}>
+            {photo.caption && (
+              <p className="polaroid-caption">{photo.caption}</p>
+            )}
+            {dateStr && (
+              <p className="polaroid-date" style={{ marginTop: photo.caption ? 2 : 0 }}>{dateStr}</p>
+            )}
+          </div>
         </div>
       </div>
 
-      {modalOpen && (
+      {/* Modal rendered via portal to escape any filter/transform stacking context */}
+      {modalOpen && createPortal(
         <PhotoModal
           photo={photo}
           imageUrl={imageUrl}
           onClose={() => setModalOpen(false)}
-        />
+        />,
+        document.body
       )}
-    </div>
+    </>
   )
 }

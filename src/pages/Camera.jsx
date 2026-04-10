@@ -7,12 +7,6 @@ import config from '../config'
 import { composeImage } from '../utils/composeImage'
 import StickerPicker from '../components/StickerPicker'
 
-const VIDEO_CONSTRAINTS = {
-  facingMode: { ideal: 'environment' },
-  width: { ideal: 1280 },
-  height: { ideal: 960 },
-}
-
 const GLAM_FILTERS = [
   { id: 'none',  label: 'Off',   icon: '○',  filter: 'none' },
   { id: 'glow',  label: 'Glow',  icon: '✨', filter: 'brightness(1.15) contrast(0.88) saturate(1.05)' },
@@ -48,19 +42,28 @@ export default function Camera() {
   const [displayedPrompt, setDisplayedPrompt] = useState('')
   const [flashing, setFlashing] = useState(false)
   const [glam, setGlam] = useState('none')
+  // 'environment' = rear camera, 'user' = front (selfie) camera
+  const [facingMode, setFacingMode] = useState('environment')
 
-  // Typewriter effect for prompt
+  const videoConstraints = {
+    facingMode: { ideal: facingMode },
+    width: { ideal: 1280 },
+    height: { ideal: 960 },
+  }
+
+  // Typewriter effect for prompt text
   useEffect(() => {
+    const text = prompt.text
     if (prefersReducedMotion()) {
-      setDisplayedPrompt(prompt)
+      setDisplayedPrompt(text)
       return
     }
     setDisplayedPrompt('')
     let i = 0
     const interval = setInterval(() => {
-      setDisplayedPrompt(prompt.slice(0, i + 1))
+      setDisplayedPrompt(text.slice(0, i + 1))
       i++
-      if (i >= prompt.length) clearInterval(interval)
+      if (i >= text.length) clearInterval(interval)
     }, 28)
     return () => clearInterval(interval)
   }, [prompt])
@@ -186,8 +189,12 @@ export default function Camera() {
 
   return (
     <div
-      className="flex flex-col min-h-screen"
-      style={{ background: isDark ? '#0d0d14' : '#FFF5E6', transition: 'background 0.3s ease' }}
+      className="flex flex-col"
+      style={{
+        background: isDark ? '#0d0d14' : '#FFF5E6',
+        transition: 'background 0.3s ease',
+        minHeight: '100dvh',        // dynamic viewport — accounts for iOS URL bar
+      }}
     >
       {/* Capture flash overlay */}
       {flashing && (
@@ -199,7 +206,7 @@ export default function Camera() {
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div
-        className="w-full flex items-center justify-between px-4 relative z-10"
+        className="w-full flex items-center justify-between px-4 relative z-10 flex-shrink-0"
         style={{ paddingTop: 'max(0.9rem, env(safe-area-inset-top))', paddingBottom: '0.75rem' }}
       >
         <button
@@ -233,26 +240,34 @@ export default function Camera() {
 
       {/* ── Main content ────────────────────────────────────────────────────── */}
       <div
-        className="flex-1 flex flex-col items-center w-full max-w-lg mx-auto px-4 gap-4"
+        className="flex-1 flex flex-col items-center w-full max-w-lg mx-auto px-4 gap-4 overflow-y-auto"
         style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
       >
         {!capturedImage ? (
           <>
             {/* Pose prompt */}
             <div
-              className="prompt-container w-full rounded-2xl px-4 py-3 flex items-center gap-2"
+              className="prompt-container w-full rounded-2xl px-4 py-3 flex items-center gap-3"
               style={{
                 background: isDark ? 'rgba(255,255,255,.08)' : '#fff',
                 border: isDark ? '1px solid rgba(255,255,255,.1)' : '1px solid rgba(0,0,0,.06)',
                 backdropFilter: isDark ? 'blur(8px)' : undefined,
               }}
             >
+              {/* Prompt emoji */}
+              <span
+                style={{ fontSize: 22, flexShrink: 0, lineHeight: 1 }}
+                aria-hidden="true"
+              >
+                {prompt.emoji}
+              </span>
+
               <p
-                className="flex-1 text-center text-sm"
+                className="flex-1 text-sm"
                 style={{ fontWeight: 700, color: isDark ? 'rgba(255,255,255,.8)' : '#444', minHeight: '1.25em' }}
               >
                 {displayedPrompt}
-                {displayedPrompt.length < prompt.length && (
+                {displayedPrompt.length < prompt.text.length && (
                   <span style={{ opacity: 0.6 }}>|</span>
                 )}
               </p>
@@ -280,7 +295,7 @@ export default function Camera() {
                   ref={webcamRef}
                   audio={false}
                   screenshotFormat="image/jpeg"
-                  videoConstraints={VIDEO_CONSTRAINTS}
+                  videoConstraints={videoConstraints}
                   className="w-full"
                   style={{ filter: GLAM_FILTERS.find((f) => f.id === glam)?.filter || 'none' }}
                   onUserMediaError={() => setUseFilePicker(true)}
@@ -290,6 +305,23 @@ export default function Camera() {
                 <div className="vf-bracket tr" />
                 <div className="vf-bracket bl" />
                 <div className="vf-bracket br" />
+
+                {/* Flip camera button — overlaid top-right inside viewfinder */}
+                <button
+                  onClick={() => setFacingMode((m) => m === 'environment' ? 'user' : 'environment')}
+                  className="absolute top-3 right-3 flex items-center justify-center rounded-full z-10"
+                  style={{
+                    width: 40, height: 40,
+                    background: 'rgba(0,0,0,.45)',
+                    border: '1px solid rgba(255,255,255,.2)',
+                    color: '#fff',
+                    fontSize: 18,
+                    backdropFilter: 'blur(6px)',
+                  }}
+                  aria-label="Flip camera"
+                >
+                  🔄
+                </button>
               </div>
             ) : (
               /* File picker with atmospheric dark orb background */
@@ -319,7 +351,6 @@ export default function Camera() {
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  capture="environment"
                   className="hidden"
                   onChange={handleFileChange}
                 />
@@ -344,7 +375,7 @@ export default function Camera() {
               </div>
             )}
 
-            {/* Shutter button */}
+            {/* Shutter button + upload link */}
             <div className="flex flex-col items-center gap-2">
               <button
                 onClick={handleCapture}
@@ -374,6 +405,17 @@ export default function Camera() {
                   style={{ color: 'rgba(255,255,255,.35)', fontWeight: 600 }}
                 >
                   Upload instead
+                </button>
+              )}
+
+              {/* Back to camera when in file-picker mode */}
+              {useFilePicker && (
+                <button
+                  onClick={() => setUseFilePicker(false)}
+                  className="text-sm underline"
+                  style={{ color: 'rgba(255,255,255,.35)', fontWeight: 600 }}
+                >
+                  Use camera instead
                 </button>
               )}
             </div>

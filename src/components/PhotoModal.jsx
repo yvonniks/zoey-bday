@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../supabaseClient'
 import config from '../config'
 
 export default function PhotoModal({ photo, imageUrl, onClose }) {
@@ -70,8 +69,8 @@ export default function PhotoModal({ photo, imageUrl, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(10px)' }}
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 gap-3"
+      style={{ background: 'rgba(0,0,0,.82)', backdropFilter: 'blur(14px)' }}
       onClick={onClose}
     >
       {/* Dismiss button */}
@@ -89,7 +88,7 @@ export default function PhotoModal({ photo, imageUrl, onClose }) {
         ×
       </button>
 
-      {/* Polaroid card */}
+      {/* Polaroid card — photo only, no actions inside */}
       <div
         className={entered ? 'modal-card-enter' : ''}
         style={{ opacity: entered ? undefined : 0 }}
@@ -107,7 +106,7 @@ export default function PhotoModal({ photo, imageUrl, onClose }) {
           />
 
           {/* Caption & date */}
-          <div className="flex flex-col items-center justify-center" style={{ minHeight: '56px', padding: '8px 10px 6px' }}>
+          <div className="flex flex-col items-center justify-center" style={{ minHeight: '52px', padding: '8px 10px 10px' }}>
             {photo.caption && (
               <p className="polaroid-caption">{photo.caption}</p>
             )}
@@ -115,50 +114,65 @@ export default function PhotoModal({ photo, imageUrl, onClose }) {
               <p className="polaroid-date" style={{ marginTop: photo.caption ? 2 : 0 }}>{dateStr}</p>
             )}
           </div>
-
-          {/* Action row */}
-          <div
-            className="flex items-center justify-center gap-0"
-            style={{ borderTop: '1px solid rgba(0,0,0,.06)', padding: '4px 0 10px' }}
-          >
-            <button
-              onClick={handleDownload}
-              className="flex-1 flex items-center justify-center gap-1 text-gray-400 hover:text-gray-600 transition-colors"
-              style={{ minHeight: 44, fontSize: 12, fontWeight: 700 }}
-              aria-label="Download photo"
-            >
-              ⬇ Save
-            </button>
-
-            <div style={{ width: 1, height: 18, background: 'rgba(0,0,0,.08)' }} />
-
-            <button
-              onClick={handleCopy}
-              className="flex-1 flex items-center justify-center transition-colors"
-              style={{
-                minHeight: 44, fontSize: 12, fontWeight: 700,
-                color: copied ? config.theme.primary : '#9ca3af',
-              }}
-              aria-label="Copy photo link"
-            >
-              {copied ? '✓ Copied' : '🔗 Link'}
-            </button>
-
-            {typeof navigator !== 'undefined' && navigator.share && (
-              <>
-                <div style={{ width: 1, height: 18, background: 'rgba(0,0,0,.08)' }} />
-                <button
-                  onClick={handleShare}
-                  className="flex-1 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
-                  style={{ minHeight: 44, fontSize: 12, fontWeight: 700 }}
-                  aria-label="Share photo"
-                >
-                  ↗ Share
-                </button>
-              </>
-            )}
-          </div>
         </div>
+      </div>
+
+      {/* Action row — visually separated below the polaroid card */}
+      <div
+        className={`flex items-center justify-center gap-1 ${entered ? 'modal-card-enter' : ''}`}
+        style={{
+          opacity: entered ? undefined : 0,
+          width: 'min(340px, 90vw)',
+          background: 'rgba(255,255,255,.1)',
+          backdropFilter: 'blur(8px)',
+          borderRadius: 16,
+          border: '1px solid rgba(255,255,255,.15)',
+          padding: '2px 0',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={handleDownload}
+          className="flex-1 flex items-center justify-center gap-1.5 font-bold transition-colors"
+          style={{ minHeight: 48, fontSize: 13, color: 'rgba(255,255,255,.75)' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,.75)')}
+          aria-label="Download photo"
+        >
+          ⬇ Save
+        </button>
+
+        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,.15)' }} />
+
+        <button
+          onClick={handleCopy}
+          className="flex-1 flex items-center justify-center gap-1.5 font-bold transition-colors"
+          style={{
+            minHeight: 48, fontSize: 13,
+            color: copied ? config.theme.accent : 'rgba(255,255,255,.75)',
+          }}
+          onMouseEnter={(e) => { if (!copied) e.currentTarget.style.color = '#fff' }}
+          onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = 'rgba(255,255,255,.75)' }}
+          aria-label="Copy photo link"
+        >
+          {copied ? '✓ Copied' : '🔗 Link'}
+        </button>
+
+        {typeof navigator !== 'undefined' && navigator.share && (
+          <>
+            <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,.15)' }} />
+            <button
+              onClick={handleShare}
+              className="flex-1 flex items-center justify-center gap-1.5 font-bold transition-colors"
+              style={{ minHeight: 48, fontSize: 13, color: 'rgba(255,255,255,.75)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,.75)')}
+              aria-label="Share photo"
+            >
+              ↗ Share
+            </button>
+          </>
+        )}
       </div>
     </div>
   )

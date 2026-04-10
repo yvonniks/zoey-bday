@@ -24,12 +24,13 @@ export default {
   },
 
   // ── Pose prompts ─────────────────────────────────────────────────────────────
+  // Each prompt has an emoji (shown on the left) and text (typewriter animated).
   prompts: [
-    "Make your best silly face!",
-    "Strike a superhero pose!",
-    "Show us your dance moves!",
-    "Hug someone next to you!",
-    "Give us your biggest smile!",
+    { emoji: "😜", text: "Make your best silly face!" },
+    { emoji: "🦸", text: "Strike a superhero pose!" },
+    { emoji: "💃", text: "Show us your dance moves!" },
+    { emoji: "🤗", text: "Hug someone next to you!" },
+    { emoji: "😁", text: "Give us your biggest smile!" },
   ],
 
   // ── Stickers ─────────────────────────────────────────────────────────────────

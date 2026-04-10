@@ -23,7 +23,9 @@ export function useScrollReveal(ref, options = {}) {
           observer.unobserve(el) // only reveal once
         }
       },
-      { threshold: options.threshold ?? 0.1, ...options }
+      // threshold: 0 → reveal as soon as any pixel is visible
+      // rootMargin bottom: pre-reveal cards just below viewport (e.g. behind nav bar)
+      { threshold: 0, rootMargin: '0px 0px 120px 0px', ...options }
     )
 
     observer.observe(el)
