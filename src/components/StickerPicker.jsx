@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import config from '../config'
+import config from '../eventConfig'
 
 export default function StickerPicker({ open, onSelect, onClose }) {
   const [mounted, setMounted] = useState(false)

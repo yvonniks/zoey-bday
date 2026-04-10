@@ -1,119 +1,157 @@
-# zoey-bday — Birthday Party Photo Booth
+# Party Photo Booth
 
-A lightweight, self-hosted photo booth for a birthday party. Guests scan a QR code, take photos, add stickers and captions, and see everything appear instantly in a shared polaroid gallery.
+A real-time, mobile-first party photo booth web app. Guests snap photos, add stickers and captions, and see them appear instantly in a shared live gallery.
 
 **Live site**: [https://yvonniks.github.io/zoey-bday](https://yvonniks.github.io/zoey-bday)
 
+**Built with:** React 19 · React Router 7 · Vite · Tailwind CSS · Supabase (Postgres + Storage + Realtime)
+
 ---
 
-## For a future party — setup in 5 steps
-
-### 1. Clone and install
+## Quick Start
 
 ```bash
-git clone https://github.com/yvonniks/zoey-bday.git my-party
-cd my-party
+git clone https://github.com/yvonniks/zoey-bday.git
+cd zoey-bday
 npm install
-```
-
-### 2. Create a Supabase project
-
-1. Go to [supabase.com](https://supabase.com) and create a new project.
-2. In the SQL editor, run:
-
-```sql
-create table photos (
-  id uuid primary key default gen_random_uuid(),
-  storage_path text not null,
-  caption text,
-  created_at timestamptz default now()
-);
-
--- Allow public reads and inserts (no auth)
-alter table photos enable row level security;
-create policy "Public read" on photos for select using (true);
-create policy "Public insert" on photos for insert with check (true);
-```
-
-3. In **Storage**, create a bucket named `photos` and set it to **public**.
-4. In **Storage → Policies**, add a policy allowing public uploads (INSERT for `anon` role).
-
-### 3. Configure the party
-
-Edit `src/config.js`:
-
-```js
-export default {
-  partyName: "Your Party Name!",
-  subtitle: "Snap a photo and leave a memory 🎉",
-  accentColor: "#FF6B9D",        // brand color
-  backgroundColor: "#FFF5F9",    // background
-  siteUrl: "https://your-username.github.io/your-repo",
-  prompts: [
-    "Make your best silly face!",
-    "Strike a superhero pose!",
-    // add more...
-  ]
-}
-```
-
-### 4. Add environment variables
-
-Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
-
-```
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
-
-Find these in your Supabase project under **Settings → API**.
-
-For GitHub Actions deploys, add these as repository secrets (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) under **Settings → Secrets → Actions**.
-
-### 5. Deploy to GitHub Pages
-
-Update `vite.config.js` to match your repo name:
-
-```js
-base: '/your-repo-name/',
-```
-
-Then push to `main` — GitHub Actions will build and deploy automatically.
-
-To deploy manually:
-
-```bash
-npm run build
-npm run deploy  # deploys dist/ to gh-pages branch
-```
-
----
-
-## Running locally
-
-```bash
+cp .env.example .env.local   # fill in your Supabase credentials
 npm run dev
 ```
 
-Open [http://localhost:5173/zoey-bday/](http://localhost:5173/zoey-bday/) (adjust the base path if you changed it).
+Open [http://localhost:5173/zoey-bday](http://localhost:5173/zoey-bday).
 
 ---
 
-## Tech stack
+## Supabase Setup
 
-- **React + Vite** — frontend
-- **Tailwind CSS** — styling
-- **Supabase** — storage (photos) + PostgreSQL (metadata) + Realtime
-- **HTML5 Canvas** — client-side compositing (photo + stickers + caption)
-- **GitHub Pages** — static hosting via GitHub Actions
+### 1. Create a project
+
+Go to [supabase.com](https://supabase.com) → New project. Note your **Project URL** and **anon public key** (Settings → API).
+
+### 2. Create the `photos` table
+
+Run this in the Supabase SQL editor:
+
+```sql
+create table photos (
+  id           bigint generated always as identity primary key,
+  storage_path text not null,
+  caption      text,
+  created_at   timestamptz default now()
+);
+
+-- Allow anyone to read and insert (no auth required)
+alter table photos enable row level security;
+
+create policy "Public read"   on photos for select using (true);
+create policy "Public insert" on photos for insert with check (true);
+```
+
+### 3. Create a storage bucket
+
+1. Go to **Storage** → **New bucket**
+2. Name it `photos` (or whatever you set in `eventConfig.storageBucketName`)
+3. Toggle **Public bucket** ON
+4. Under **Policies**, add:
+   - **SELECT** → `true` (public read)
+   - **INSERT** → `true` (anyone can upload)
+
+### 4. Enable Realtime
+
+Go to **Database** → **Replication** → enable the `photos` table for **INSERT** events.
+
+### 5. Fill in `.env.local`
+
+```env
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+For GitHub Actions deploys, add these as repository secrets under **Settings → Secrets → Actions**.
 
 ---
 
-## Customization
+## Fork for Your Event
 
-| What | Where |
+Only two files need to change:
+
+### `src/eventConfig.js`
+
+| Field | Type | Description |
+|---|---|---|
+| `eventSlug` | `string` | URL-safe slug used in the ZIP filename, e.g. `"emma-bday-2027"` |
+| `date` | `string` | ISO date of the event, e.g. `"2027-06-15"` |
+| `storageBucketName` | `string` | Supabase storage bucket name (must match what you created) |
+| `partyName` | `string` | Displayed in the header and on the camera page |
+| `subtitle` | `string` | Subheading under the party name |
+| `siteUrl` | `string` | Full deployed URL — used for the QR code |
+| `ogDescription` | `string` | Open Graph description for link previews |
+| `ogImage` | `string` | Open Graph image URL |
+| `theme.primary` | `hex` | Primary color — buttons, active states |
+| `theme.secondary` | `hex` | Secondary color — accents, gradients |
+| `theme.accent` | `hex` | Accent color — push-pins, confetti, highlights |
+| `theme.background` | `hex` | Page background (used when `corkboard: false`) |
+| `theme.gradientStart` | `hex` | Gallery hero gradient left color |
+| `theme.gradientEnd` | `hex` | Gallery hero gradient right color |
+| `theme.corkboard` | `boolean` | `true` to show corkboard texture background |
+| `prompts` | `Array<{emoji, text}>` | Pose prompts shown on the camera viewfinder |
+| `stickers` | `string[]` | Emoji sticker palette |
+
+### `.env.local`
+
+Swap in your new project's Supabase URL and anon key.
+
+### `index.html`
+
+Update the `<title>`, `og:title`, `og:description`, and `og:image` meta tags manually — these are static and can't be injected at build time.
+
+---
+
+## Deploy to GitHub Pages
+
+1. Update `vite.config.js` — set `base` to match your repo name:
+   ```js
+   base: '/your-repo-name/'
+   ```
+2. Update `BrowserRouter` in `src/App.jsx`:
+   ```jsx
+   <BrowserRouter basename="/your-repo-name">
+   ```
+3. Run:
+   ```bash
+   npm run deploy
+   ```
+
+This builds the app and pushes `dist/` to the `gh-pages` branch. GitHub Pages serves it automatically.
+
+---
+
+## Features
+
+| Feature | Description |
 |---|---|
-| Party name, colors, prompts | `src/config.js` |
-| Sticker set | `src/components/StickerPicker.jsx` |
-| Canvas compositing logic | `src/utils/composeImage.js` |
-| Routing | `src/App.jsx` |
+| **Live Gallery** | Photos appear in real-time via Supabase Realtime |
+| **Camera** | Webcam capture with glam filters, stickers, captions |
+| **Upload** | Tap the gallery icon to upload from your camera roll |
+| **Bulk Select** | Select photos in the gallery → download as a single ZIP |
+| **Slideshow** | Full-screen auto-playing carousel at `/slideshow` — great for a TV or projector |
+| **QR Code** | Shareable QR code to invite guests |
+| **Mobile-first** | Safe area insets, iOS 100dvh fix, native share sheet on mobile |
+
+## Routes
+
+| Path | Page |
+|---|---|
+| `/` | Gallery (live photo feed) |
+| `/camera` | Camera / photo editor |
+| `/qr` | QR code share page |
+| `/slideshow` | Full-screen slideshow |
+
+## Tech Stack
+
+- **React + Vite** — frontend framework and build tool
+- **Tailwind CSS** — utility styling
+- **Supabase** — Postgres (metadata) + Storage (photos) + Realtime
+- **HTML5 Canvas** — client-side photo compositing (stickers + caption baked in)
+- **JSZip + file-saver** — bulk photo ZIP download
+- **GitHub Pages** — static hosting

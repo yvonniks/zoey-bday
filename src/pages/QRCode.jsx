@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import QRCodeLib from 'qrcode'
-import config from '../config'
+import config from '../eventConfig'
 
 export default function QRCode() {
   const canvasRef = useRef(null)

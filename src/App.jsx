@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import config from './config'
+import config from './eventConfig'
 import Camera from './pages/Camera'
 import Gallery from './pages/Gallery'
 import QRCode from './pages/QRCode'
+import Slideshow from './pages/Slideshow'
 
 export default function App() {
   const { theme } = config
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/" element={<Gallery />} />
           <Route path="/camera" element={<Camera />} />
           <Route path="/qr" element={<QRCode />} />
+          <Route path="/slideshow" element={<Slideshow />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

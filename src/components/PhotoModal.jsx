@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import config from '../config'
+import config from '../eventConfig'
 
 export default function PhotoModal({ photo, imageUrl, onClose }) {
   const [copied, setCopied] = useState(false)
@@ -31,13 +31,25 @@ export default function PhotoModal({ photo, imageUrl, onClose }) {
   }, [])
 
   const handleDownload = async () => {
+    const isMobile = window.matchMedia('(pointer: coarse)').matches
     try {
       const response = await fetch(imageUrl)
       const blob = await response.blob()
+
+      // On mobile, prefer native share sheet (iOS 15+ / Android Chrome)
+      if (isMobile && typeof navigator.canShare === 'function') {
+        const file = new File([blob], `photo-${photo.id}.jpg`, { type: 'image/jpeg' })
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: config.partyName })
+          return
+        }
+      }
+
+      // Desktop / fallback: anchor download
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `party-photo-${photo.id}.jpg`
+      a.download = `photo-${photo.id}.jpg`
       a.click()
       URL.revokeObjectURL(url)
     } catch {
@@ -137,7 +149,7 @@ export default function PhotoModal({ photo, imageUrl, onClose }) {
           style={{ minHeight: 48, fontSize: 13, color: 'rgba(255,255,255,.75)' }}
           onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
           onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,.75)')}
-          aria-label="Download photo"
+          aria-label="Save photo"
         >
           ⬇ Save
         </button>

@@ -3,7 +3,7 @@ import Webcam from 'react-webcam'
 import { useNavigate } from 'react-router-dom'
 import confetti from 'canvas-confetti'
 import { supabase } from '../supabaseClient'
-import config from '../config'
+import config from '../eventConfig'
 import { composeImage } from '../utils/composeImage'
 import StickerPicker from '../components/StickerPicker'
 
@@ -167,7 +167,7 @@ export default function Camera() {
       const blob = await composeImage(capturedImage, stickers, caption)
       const filename = `photo_${Date.now()}.jpg`
       const { error: storageError } = await supabase.storage
-        .from('photos')
+        .from(config.storageBucketName)
         .upload(filename, blob, { contentType: 'image/jpeg', upsert: false })
       if (storageError) throw storageError
 

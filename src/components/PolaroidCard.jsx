@@ -2,12 +2,12 @@ import { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import confetti from 'canvas-confetti'
 import { supabase } from '../supabaseClient'
-import config from '../config'
+import config from '../eventConfig'
 import PhotoModal from './PhotoModal'
 
-export default function PolaroidCard({ photo, rotation = 0 }) {
+export default function PolaroidCard({ photo, rotation = 0, selectionMode = false, isSelected = false, onToggleSelect }) {
   const [modalOpen, setModalOpen] = useState(false)
-  const imageUrl = supabase.storage.from('photos').getPublicUrl(photo.storage_path).data.publicUrl
+  const imageUrl = supabase.storage.from(config.storageBucketName).getPublicUrl(photo.storage_path).data.publicUrl
 
   const longPressTimerRef = useRef(null)
   const suppressNextClickRef = useRef(false)
@@ -20,6 +20,7 @@ export default function PolaroidCard({ photo, rotation = 0 }) {
 
   // ── Long-press handlers ───────────────────────────────────────────────────
   const handlePressStart = (e) => {
+    if (selectionMode) return
     // Capture element synchronously — e.currentTarget becomes null after this
     // handler returns (React's synthetic event cleanup), so we must save it now.
     const element = e.currentTarget
@@ -48,6 +49,10 @@ export default function PolaroidCard({ photo, rotation = 0 }) {
   }
 
   const handleClick = () => {
+    if (selectionMode) {
+      onToggleSelect?.(photo.id)
+      return
+    }
     if (suppressNextClickRef.current) {
       suppressNextClickRef.current = false
       return
@@ -94,6 +99,42 @@ export default function PolaroidCard({ photo, rotation = 0 }) {
             loading="lazy"
           />
 
+          {/* Selection overlay */}
+          {selectionMode && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 10, left: 10, right: 10,
+                aspectRatio: '1',
+                borderRadius: '1px',
+                background: isSelected ? 'rgba(0,0,0,.35)' : 'rgba(0,0,0,.15)',
+                transition: 'background .15s',
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'flex-end',
+                padding: 8,
+              }}
+            >
+              <div
+                style={{
+                  width: 24, height: 24,
+                  borderRadius: '50%',
+                  background: isSelected ? config.theme.primary : 'transparent',
+                  border: isSelected ? `2px solid ${config.theme.primary}` : '2px solid rgba(255,255,255,.9)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all .15s',
+                  boxShadow: '0 1px 4px rgba(0,0,0,.3)',
+                }}
+              >
+                {isSelected && (
+                  <span style={{ color: '#fff', fontSize: 13, fontWeight: 900, lineHeight: 1 }}>✓</span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Caption & date area */}
           <div className="flex flex-col items-center justify-center" style={{ minHeight: '52px', padding: '6px 8px 10px' }}>
             {photo.caption && (
@@ -107,7 +148,7 @@ export default function PolaroidCard({ photo, rotation = 0 }) {
       </div>
 
       {/* Modal rendered via portal to escape any filter/transform stacking context */}
-      {modalOpen && createPortal(
+      {modalOpen && !selectionMode && createPortal(
         <PhotoModal
           photo={photo}
           imageUrl={imageUrl}

@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import confetti from 'canvas-confetti'
 import { supabase } from '../supabaseClient'
-import config from '../config'
+import config from '../eventConfig'
 import PolaroidCard from '../components/PolaroidCard'
 import ConfettiBackground from '../components/ConfettiBackground'
+import BulkActionBar from '../components/BulkActionBar'
 import { useScrollReveal } from '../hooks/useScrollReveal'
+import { downloadZip } from '../utils/downloadZip'
 
 function randomRotation() {
   return (Math.random() * 8 - 4).toFixed(2)
@@ -15,7 +17,7 @@ function withMeta(photo, isNew = false) {
   return { ...photo, _isNew: isNew, _rotation: randomRotation() }
 }
 
-function RevealCard({ photo }) {
+function RevealCard({ photo, selectionMode, isSelected, onToggleSelect }) {
   const ref = useRef(null)
   useScrollReveal(ref)
   return (
@@ -24,7 +26,13 @@ function RevealCard({ photo }) {
       className={`break-inside-avoid mb-4 ${photo._isNew ? 'polaroid-drop-in' : 'scroll-reveal'}`}
       style={{ '--card-rotation': `${photo._rotation}deg` }}
     >
-      <PolaroidCard photo={photo} rotation={photo._rotation} />
+      <PolaroidCard
+        photo={photo}
+        rotation={photo._rotation}
+        selectionMode={selectionMode}
+        isSelected={isSelected}
+        onToggleSelect={onToggleSelect}
+      />
     </div>
   )
 }
@@ -33,6 +41,10 @@ export default function Gallery() {
   const [photos, setPhotos] = useState([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null) // { message, exiting }
+  const [selectionMode, setSelectionMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [downloading, setDownloading] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState(null)
   const confettiFiredRef = useRef(false)
   const toastTimerRef = useRef(null)
   const navigate = useNavigate()
@@ -87,6 +99,57 @@ export default function Gallery() {
     }
   }, [])
 
+  // ── Bulk selection handlers ────────────────────────────────────────────────
+
+  const handleEnterSelection = () => {
+    setSelectionMode(true)
+    setSelectedIds(new Set())
+  }
+
+  const handleToggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === photos.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(photos.map((p) => p.id)))
+    }
+  }
+
+  const handleCancelSelection = () => {
+    setSelectionMode(false)
+    setSelectedIds(new Set())
+    setDownloadProgress(null)
+  }
+
+  const handleBulkDownload = async () => {
+    if (selectedIds.size === 0) return
+    const isMobile = window.matchMedia('(pointer: coarse)').matches
+    if (isMobile && selectedIds.size > 20) {
+      showToast('Large download — this may be slow on mobile. Consider using a desktop.')
+    }
+    const selected = photos
+      .filter((p) => selectedIds.has(p.id))
+      .map((p) => ({
+        ...p,
+        url: supabase.storage.from(config.storageBucketName).getPublicUrl(p.storage_path).data.publicUrl,
+      }))
+    setDownloading(true)
+    setDownloadProgress({ done: 0, total: selected.length })
+    try {
+      await downloadZip(selected, (done, total) => setDownloadProgress({ done, total }))
+    } finally {
+      setDownloading(false)
+      setDownloadProgress(null)
+    }
+  }
+
   return (
     <div className="gallery-page flex flex-col min-h-screen" style={{ position: 'relative' }}>
       {/* Animated confetti background — sits behind all content */}
@@ -103,18 +166,48 @@ export default function Gallery() {
           paddingRight: '1.5rem',
         }}
       >
-        {/* Party name */}
-        <h1 className="gallery-title">{config.partyName}</h1>
-        <p className="gallery-subtitle">{config.subtitle}</p>
+        {/* Party name + Select button row */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <h1 className="gallery-title">{config.partyName}</h1>
+            <p className="gallery-subtitle">{config.subtitle}</p>
+          </div>
 
-        {/* Photo count pill */}
+          {/* Select button — only shown when there are photos */}
+          {!loading && photos.length > 0 && !selectionMode && (
+            <button
+              onClick={handleEnterSelection}
+              className="flex-shrink-0 mt-1 px-3 py-1.5 rounded-full font-bold"
+              style={{
+                background: 'rgba(255,255,255,.12)',
+                border: '1px solid rgba(255,255,255,.2)',
+                color: 'rgba(255,255,255,.8)',
+                fontSize: 12,
+                fontFamily: "'Fredoka', sans-serif",
+              }}
+            >
+              Select
+            </button>
+          )}
+        </div>
+
+        {/* Photo count pill + Slideshow link */}
         {!loading && photos.length > 0 && (
-          <div
-            className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full relative z-10"
-            style={{ background: 'rgba(0,0,0,.2)', color: 'rgba(255,255,255,.7)', fontSize: '11px', fontWeight: 700 }}
-          >
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4eff91', display: 'inline-block', animation: 'none' }} />
-            {photos.length} {photos.length === 1 ? 'photo' : 'photos'} shared
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
+            <div
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full relative z-10"
+              style={{ background: 'rgba(0,0,0,.2)', color: 'rgba(255,255,255,.7)', fontSize: '11px', fontWeight: 700 }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4eff91', display: 'inline-block' }} />
+              {photos.length} {photos.length === 1 ? 'photo' : 'photos'} shared
+            </div>
+            <button
+              onClick={() => navigate('/slideshow')}
+              className="inline-flex items-center gap-1 px-3 py-1 rounded-full relative z-10"
+              style={{ background: 'rgba(0,0,0,.2)', color: 'rgba(255,255,255,.55)', fontSize: '11px', fontWeight: 700 }}
+            >
+              📽 Slideshow
+            </button>
           </div>
         )}
       </div>
@@ -146,7 +239,13 @@ export default function Gallery() {
         ) : (
           <div className="columns-2 sm:columns-3 lg:columns-4 gap-4">
             {photos.map((photo) => (
-              <RevealCard key={photo.id} photo={photo} />
+              <RevealCard
+                key={photo.id}
+                photo={photo}
+                selectionMode={selectionMode}
+                isSelected={selectedIds.has(photo.id)}
+                onToggleSelect={handleToggleSelect}
+              />
             ))}
           </div>
         )}
@@ -170,10 +269,28 @@ export default function Gallery() {
         </div>
       )}
 
+      {/* ── Bulk action bar ──────────────────────────────────────────────────── */}
+      {selectionMode && (
+        <BulkActionBar
+          selectedCount={selectedIds.size}
+          totalCount={photos.length}
+          onSelectAll={handleSelectAll}
+          onDownload={handleBulkDownload}
+          onCancel={handleCancelSelection}
+          downloading={downloading}
+          downloadProgress={downloadProgress}
+          showToast={showToast}
+        />
+      )}
+
       {/* ── Bottom nav ───────────────────────────────────────────────────────── */}
       <div className="bottom-nav">
         {/* Gallery tab (active) */}
-        <div className="bottom-nav-item">
+        <div
+          className="bottom-nav-item"
+          onClick={(e) => e.preventDefault()}
+          onContextMenu={(e) => e.preventDefault()}
+        >
           <span className="bottom-nav-icon">🖼️</span>
           <span className="bottom-nav-label active">Gallery</span>
         </div>
@@ -190,7 +307,7 @@ export default function Gallery() {
         </div>
 
         {/* QR tab */}
-        <div className="bottom-nav-item" onClick={() => navigate('/qr')} style={{ cursor: 'pointer' }}>
+        <div className="bottom-nav-item" onClick={() => navigate('/qr')} onContextMenu={(e) => e.preventDefault()} style={{ cursor: 'pointer' }}>
           <span className="bottom-nav-icon">📲</span>
           <span className="bottom-nav-label">Share</span>
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import config from '../config'
+import config from '../eventConfig'
 
 // Lightweight animated confetti canvas rendered as a fixed background layer.
 // ~35 rectangular pieces in the party theme colors drift slowly downward.
