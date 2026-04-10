@@ -37,7 +37,7 @@ export default function Camera() {
   const [stickerPickerOpen, setStickerPickerOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
-  const [useFilePicker, setUseFilePicker] = useState(false)
+  const [cameraUnavailable, setCameraUnavailable] = useState(false)
   const [prompt, setPrompt] = useState(randomPrompt)
   const [displayedPrompt, setDisplayedPrompt] = useState('')
   const [flashing, setFlashing] = useState(false)
@@ -68,13 +68,16 @@ export default function Camera() {
     return () => clearInterval(interval)
   }, [prompt])
 
+  // Detect touch device to decide whether to show the flip camera button
+  const isTouchDevice = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+
   const isDark = !capturedImage  // dark theme for viewfinder, light for preview
 
   // ── Capture ────────────────────────────────────────────────────────────────
 
   const handleCapture = useCallback(() => {
     const video = webcamRef.current?.video
-    if (!video || video.readyState !== 4) return
+    if (!video || video.readyState !== 4 || cameraUnavailable) return
     if (!prefersReducedMotion()) setFlashing(true)
     const activeFilter = GLAM_FILTERS.find((f) => f.id === glam)?.filter || 'none'
     if (activeFilter === 'none') {
@@ -90,7 +93,7 @@ export default function Camera() {
       ctx.drawImage(video, 0, 0)
       setCapturedImage(canvas.toDataURL('image/jpeg', 0.92))
     }
-  }, [glam])
+  }, [glam, cameraUnavailable])
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
@@ -289,8 +292,17 @@ export default function Camera() {
             </div>
 
             {/* Viewfinder */}
-            {!useFilePicker ? (
-              <div className="relative w-full rounded-2xl overflow-hidden bg-black">
+            <div className="relative w-full rounded-2xl overflow-hidden bg-black">
+              {cameraUnavailable ? (
+                <div
+                  className="w-full flex flex-col items-center justify-center gap-2"
+                  style={{ minHeight: 260 }}
+                >
+                  <span style={{ fontSize: 40 }}>📷</span>
+                  <p style={{ color: 'rgba(255,255,255,.55)', fontSize: 14, fontWeight: 700 }}>Camera unavailable</p>
+                  <p style={{ color: 'rgba(255,255,255,.3)', fontSize: 12, fontWeight: 600 }}>Use the upload button below</p>
+                </div>
+              ) : (
                 <Webcam
                   ref={webcamRef}
                   audio={false}
@@ -298,96 +310,61 @@ export default function Camera() {
                   videoConstraints={videoConstraints}
                   className="w-full"
                   style={{ filter: GLAM_FILTERS.find((f) => f.id === glam)?.filter || 'none' }}
-                  onUserMediaError={() => setUseFilePicker(true)}
+                  onUserMediaError={() => setCameraUnavailable(true)}
                 />
-                {/* Corner brackets */}
-                <div className="vf-bracket tl" />
-                <div className="vf-bracket tr" />
-                <div className="vf-bracket bl" />
-                <div className="vf-bracket br" />
-
-                {/* Flip camera button — overlaid top-right inside viewfinder */}
-                <button
-                  onClick={() => setFacingMode((m) => m === 'environment' ? 'user' : 'environment')}
-                  className="absolute top-3 right-3 flex items-center justify-center rounded-full z-10"
-                  style={{
-                    width: 40, height: 40,
-                    background: 'rgba(0,0,0,.45)',
-                    border: '1px solid rgba(255,255,255,.2)',
-                    color: '#fff',
-                    fontSize: 18,
-                    backdropFilter: 'blur(6px)',
-                  }}
-                  aria-label="Flip camera"
-                >
-                  🔄
-                </button>
-              </div>
-            ) : (
-              /* File picker with atmospheric dark orb background */
-              <div
-                className="w-full rounded-2xl relative overflow-hidden flex flex-col items-center justify-center gap-4 cursor-pointer"
-                style={{
-                  background: 'linear-gradient(155deg, #131b2e 0%, #0d1a2a 45%, #0a1f18 100%)',
-                  minHeight: '260px',
-                  border: `2px dashed ${config.theme.primary}60`,
-                }}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {/* Atmospheric orbs */}
-                <div className="vf-orb" style={{ width: 190, height: 190, background: 'rgba(233,30,140,.13)', top: -55, left: -55, '--d': '5s', '--mx': '30px', '--my': '22px' }} />
-                <div className="vf-orb" style={{ width: 155, height: 155, background: 'rgba(155,89,182,.11)', bottom: -25, right: -30, '--d': '4.5s', '--dl': '-2.2s', '--mx': '-22px', '--my': '-28px' }} />
-                <div className="vf-orb" style={{ width: 100, height: 100, background: 'rgba(255,179,71,.09)', top: '40%', left: '50%', '--d': '6s', '--dl': '-1.2s', '--mx': '20px', '--my': '-15px' }} />
-
-                {/* Viewfinder brackets */}
-                <div className="vf-bracket tl" />
-                <div className="vf-bracket tr" />
-                <div className="vf-bracket bl" />
-                <div className="vf-bracket br" />
-
-                <span className="text-5xl relative z-10">📷</span>
-                <p className="font-bold relative z-10" style={{ color: 'rgba(255,255,255,.6)', fontSize: 14 }}>Tap to choose a photo</p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </div>
-            )}
+              )}
+              {/* Corner brackets */}
+              <div className="vf-bracket tl" />
+              <div className="vf-bracket tr" />
+              <div className="vf-bracket bl" />
+              <div className="vf-bracket br" />
+            </div>
 
             {/* Glam filter bar */}
-            {!useFilePicker && (
-              <div className="glam-filter-bar">
-                {GLAM_FILTERS.map((f) => (
-                  <button
-                    key={f.id}
-                    className={`glam-filter-btn${glam === f.id ? ' active' : ''}`}
-                    onClick={() => setGlam(f.id)}
-                    aria-label={`${f.label} filter`}
-                    aria-pressed={glam === f.id}
-                  >
-                    <span style={{ fontSize: 16 }}>{f.icon}</span>
-                    <span>{f.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="glam-filter-bar">
+              {GLAM_FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  className={`glam-filter-btn${glam === f.id ? ' active' : ''}`}
+                  onClick={() => setGlam(f.id)}
+                  aria-label={`${f.label} filter`}
+                  aria-pressed={glam === f.id}
+                >
+                  <span style={{ fontSize: 16 }}>{f.icon}</span>
+                  <span>{f.label}</span>
+                </button>
+              ))}
+            </div>
 
-            {/* Shutter button + upload link */}
-            <div className="flex flex-col items-center gap-2">
+            {/* Controls row: Upload | Shutter | Flip (iOS camera style) */}
+            <div className="flex items-center justify-between w-full px-2">
+              {/* Upload from gallery — opens file picker directly */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center justify-center rounded-full"
+                style={{
+                  width: 52, height: 52,
+                  background: 'rgba(255,255,255,.12)',
+                  border: '1px solid rgba(255,255,255,.2)',
+                  fontSize: 24,
+                }}
+                aria-label="Upload from gallery"
+              >
+                🖼️
+              </button>
+
+              {/* Shutter button */}
               <button
                 onClick={handleCapture}
-                disabled={useFilePicker}
+                disabled={cameraUnavailable}
                 className="relative"
                 style={{
                   width: 82, height: 82,
                   background: 'rgba(255,255,255,.12)',
                   border: '4px solid rgba(255,255,255,.55)',
                   borderRadius: '50%',
-                  cursor: useFilePicker ? 'default' : 'pointer',
-                  opacity: useFilePicker ? 0.4 : 1,
+                  cursor: cameraUnavailable ? 'default' : 'pointer',
+                  opacity: cameraUnavailable ? 0.4 : 1,
                 }}
                 aria-label="Take photo"
               >
@@ -398,27 +375,34 @@ export default function Camera() {
                 }} />
               </button>
 
-              {!useFilePicker && (
+              {/* Flip camera — touch devices only; spacer on desktop */}
+              {isTouchDevice ? (
                 <button
-                  onClick={() => setUseFilePicker(true)}
-                  className="text-sm underline"
-                  style={{ color: 'rgba(255,255,255,.35)', fontWeight: 600 }}
+                  onClick={() => setFacingMode((m) => m === 'environment' ? 'user' : 'environment')}
+                  className="flex items-center justify-center rounded-full"
+                  style={{
+                    width: 52, height: 52,
+                    background: 'rgba(255,255,255,.12)',
+                    border: '1px solid rgba(255,255,255,.2)',
+                    fontSize: 24,
+                  }}
+                  aria-label="Flip camera"
                 >
-                  Upload instead
+                  🔄
                 </button>
-              )}
-
-              {/* Back to camera when in file-picker mode */}
-              {useFilePicker && (
-                <button
-                  onClick={() => setUseFilePicker(false)}
-                  className="text-sm underline"
-                  style={{ color: 'rgba(255,255,255,.35)', fontWeight: 600 }}
-                >
-                  Use camera instead
-                </button>
+              ) : (
+                <div style={{ width: 52 }} />
               )}
             </div>
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
           </>
         ) : (
           <>

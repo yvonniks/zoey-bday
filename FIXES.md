@@ -71,3 +71,35 @@ A running record of bugs found, root causes, and fixes applied. Separate from PR
 - **Symptom**: Once "Upload instead" was tapped, there was no escape back to the live camera view.
 - **Fix**: Added a "Use camera instead" button that appears when in file-picker mode, resetting `useFilePicker` to `false`.
 - **File**: `src/pages/Camera.jsx`
+
+---
+
+## 2026-04-10 — Gallery Fix (Round 2) + Camera Controls Overhaul
+
+### 12. Gallery: 4th/5th photo flickering / empty space
+- **Symptom**: With 4–5 photos, the last 1–2 cards would show as empty space or flicker on scroll.
+- **Root cause (primary)**: `_isNew` photos had both `scroll-reveal` (starts `opacity: 0`) and `polaroid-drop-in` (`animation-fill-mode: both`, ends `opacity: 1`) applied at the same time. After the drop-in animation the non-`revealed` `scroll-reveal` rule competed in the CSS cascade, causing cards to flicker between transparent and visible on repaints/scroll.
+- **Root cause (secondary)**: Two JSX elements in Gallery had **duplicate `style` props** — React silently drops the first, losing `position: relative; z-index: 1` on the hero and grid containers.
+- **Root cause (tertiary)**: `space-y-5` (margin-top on every child) doesn't apply predictably inside CSS `columns-*` layout, sometimes creating phantom empty rows.
+- **Fix**: `_isNew` photos now get only `polaroid-drop-in` (no `scroll-reveal`). Non-new photos get only `scroll-reveal`. Merged duplicate `style` props. Replaced `space-y-5` with `mb-4` on each card.
+- **Also**: Increased `useScrollReveal` rootMargin from `120px` to `200px` to more aggressively pre-reveal cards sitting behind the bottom nav on taller devices.
+- **Files**: `src/pages/Gallery.jsx`, `src/hooks/useScrollReveal.js`
+
+### 13. Camera: Vertical controls → horizontal iOS-style row
+- **Symptom**: Flip camera button was overlaid inside the viewfinder; shutter and upload were in a vertical column below it.
+- **Fix**: Moved flip button out of the viewfinder overlay. Created a horizontal controls row below the filter bar: `[🖼️ Upload] [◯ Shutter] [🔄 Flip]`. Flip button is hidden on desktop (detected via `(pointer: coarse)` media query) and replaced by an invisible spacer to keep the shutter centered.
+- **File**: `src/pages/Camera.jsx`
+
+### 14. Camera: Upload required an extra tap (intermediate screen)
+- **Symptom**: Tapping "Upload instead" showed a dark "Tap to choose a photo" intermediate screen, requiring a second tap to actually open the file picker.
+- **Fix**: Removed the intermediate screen and `useFilePicker` state entirely. The 🖼️ upload button in the controls row now calls `fileInputRef.current?.click()` directly, opening the system file picker/gallery in one tap.
+- **File**: `src/pages/Camera.jsx`
+
+### 15. Camera: onUserMediaError left app in broken state
+- **Symptom**: When camera permission was denied or unavailable, the app switched to the intermediate file-picker screen (removed in fix #14), leaving no usable UI.
+- **Fix**: Added `cameraUnavailable` state. When `onUserMediaError` fires, the viewfinder area shows a "Camera unavailable — use the upload button below" placeholder. The controls row remains fully functional; the shutter button is visually dimmed.
+- **File**: `src/pages/Camera.jsx`
+
+### 16. Sticker resizing — decided not to implement
+- **Request**: Allow stickers to be resized (pinch or slider).
+- **Decision**: Not implemented. Pinch-to-resize requires multi-touch event tracking and significantly increases code complexity. A party photo booth favors speed over precision, and the current fixed size (12% of image width) works well. Can revisit if users request it post-party.

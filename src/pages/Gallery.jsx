@@ -21,7 +21,7 @@ function RevealCard({ photo }) {
   return (
     <div
       ref={ref}
-      className={`break-inside-avoid scroll-reveal${photo._isNew ? ' polaroid-drop-in' : ''}`}
+      className={`break-inside-avoid mb-4 ${photo._isNew ? 'polaroid-drop-in' : 'scroll-reveal'}`}
       style={{ '--card-rotation': `${photo._rotation}deg` }}
     >
       <PolaroidCard photo={photo} rotation={photo._rotation} />
@@ -95,8 +95,8 @@ export default function Gallery() {
       {/* ── Hero header ──────────────────────────────────────────────────────── */}
       <div
         className="gallery-hero flex-shrink-0"
-        style={{ position: 'relative', zIndex: 1 }}
         style={{
+          position: 'relative', zIndex: 1,
           paddingTop: 'max(2.5rem, env(safe-area-inset-top))',
           paddingBottom: '1.1rem',
           paddingLeft: '1.5rem',
@@ -122,8 +122,7 @@ export default function Gallery() {
       {/* ── Gallery grid ─────────────────────────────────────────────────────── */}
       <div
         className="flex-1 px-3 pt-5"
-        style={{ position: 'relative', zIndex: 1 }}
-        style={{ paddingBottom: 'calc(76px + env(safe-area-inset-bottom) + 1.5rem)' }}
+        style={{ position: 'relative', zIndex: 1, paddingBottom: 'calc(76px + env(safe-area-inset-bottom) + 1.5rem)' }}
       >
         {loading ? (
           <div className="flex flex-col items-center justify-center gap-4 h-64">
@@ -145,7 +144,7 @@ export default function Gallery() {
             </button>
           </div>
         ) : (
-          <div className="columns-2 sm:columns-3 lg:columns-4 gap-4 space-y-5">
+          <div className="columns-2 sm:columns-3 lg:columns-4 gap-4">
             {photos.map((photo) => (
               <RevealCard key={photo.id} photo={photo} />
             ))}
